@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Type */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Brand */
+  --color-brand-50: #EEF0FF;
+  --color-brand-100: #E0E3FF;
+  --color-brand-400: #6D70F5;
+  --color-brand-500: #4F46E5;
+  --color-brand-600: #4338CA;
+  --color-brand-700: #372FA3;
+
+  /* Status */
+  --color-success-50: #ECFDF5;
+  --color-success-500: #059669;
+  --color-warning-50: #FFFBEB;
+  --color-warning-500: #D97706;
+  --color-danger-50: #FEF2F2;
+  --color-danger-500: #DC2626;
+  --color-info-50: #EFF6FF;
+  --color-info-500: #2563EB;
+
+  /* Neutrals (light) */
+  --color-canvas: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-border: #E4E4E9;
+  --color-ink-900: #0F1222;
+  --color-ink-600: #4B5266;
+  --color-ink-400: #8A90A3;
+}
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-canvas: #0B0D12;
+  --color-surface: #12141C;
+  --color-border: #232634;
+  --color-ink-900: #F4F5F7;
+  --color-ink-600: #A8ADBD;
+  --color-ink-400: #666C80;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Métricas monetárias e numéricas usam a mono — reforça leitura de dado real */
+.font-data {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+}
