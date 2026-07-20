@@ -28,7 +28,7 @@ export function ListaEsperaFormModal({
     funcionario_id: 'João Guilherme',
     data_desejada: '20/06/2025',
     horario_desejado: '09:00',
-    observacoes: '',
+    observacoes: 'Barba desenhada, sem bigode e com cavanhaque.',
     ...valoresIniciais,
   }
 
