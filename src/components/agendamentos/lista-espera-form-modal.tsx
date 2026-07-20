@@ -23,8 +23,8 @@ export function ListaEsperaFormModal({
   aoSalvar: (valores: ListaEsperaFormValues) => Promise<unknown>
 }) {
   const valoresVazios: ListaEsperaFormValues = {
-    cliente_id: '',
-    servico_id: '',
+    cliente_id: 'william',
+    servico_id: 'Barba Desenhada',
     funcionario_id: 'João Guilherme',
     data_desejada: '20/06/2025',
     horario_desejado: '09:00',
