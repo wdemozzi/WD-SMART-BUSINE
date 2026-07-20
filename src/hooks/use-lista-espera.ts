@@ -7,6 +7,7 @@ export interface ListaEsperaFormValues {
   servico_id: string
   funcionario_id: string | null
   data_desejada: string | null
+  horario_desejado: string
   observacoes: string
 }
 
