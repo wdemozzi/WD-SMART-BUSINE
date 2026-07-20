@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Tag, X, Clock } from 'lucide-react'
+import { Tag, X, Clock, AlertTriangle } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { Label, Input, Select, Textarea } from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
 import { aplicarCupom, previsualizarCupom } from '@/hooks/use-cupons'
 import { buscarHorariosDisponiveis } from '@/hooks/use-agendamento-publico'
 import { buscarPacoteDisponivel } from '@/hooks/use-vendas-pacotes'
+import { buscarOcorrenciaCliente, type OcorrenciaCliente } from '@/hooks/use-ocorrencias-clientes'
 import { formatCurrency, cn } from '@/lib/utils'
 import type { Cliente, Servico, Funcionario } from '@/types/database'
 
@@ -17,6 +18,7 @@ interface NovoAgendamentoModalProps {
   servicos: Servico[]
   funcionarios: Funcionario[]
   dataInicial: Date
+  preenchimentoInicial?: { clienteId: string; servicoId: string; funcionarioId: string | null }
   aoCriar: (payload: {
     cliente_id: string
     servico_id: string
@@ -53,11 +55,12 @@ export function NovoAgendamentoModal({
   servicos,
   funcionarios,
   dataInicial,
+  preenchimentoInicial,
   aoCriar,
 }: NovoAgendamentoModalProps) {
-  const [clienteId, setClienteId] = useState('')
-  const [servicoId, setServicoId] = useState('')
-  const [funcionarioId, setFuncionarioId] = useState('')
+  const [clienteId, setClienteId] = useState(preenchimentoInicial?.clienteId ?? '')
+  const [servicoId, setServicoId] = useState(preenchimentoInicial?.servicoId ?? '')
+  const [funcionarioId, setFuncionarioId] = useState(preenchimentoInicial?.funcionarioId ?? '')
   const [diaSelecionado, setDiaSelecionado] = useState<Date | null>(null)
   const [horarios, setHorarios] = useState<string[]>([])
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)
@@ -70,8 +73,18 @@ export function NovoAgendamentoModal({
   const [erroCupom, setErroCupom] = useState<string | null>(null)
   const [pacoteDisponivel, setPacoteDisponivel] = useState<{ vendaPacoteId: string; pacoteNome: string; restantes: number } | null>(null)
   const [usarPacote, setUsarPacote] = useState(false)
+  const [ocorrenciaCliente, setOcorrenciaCliente] = useState<OcorrenciaCliente | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (aberto && preenchimentoInicial) {
+      setClienteId(preenchimentoInicial.clienteId)
+      setServicoId(preenchimentoInicial.servicoId)
+      setFuncionarioId(preenchimentoInicial.funcionarioId ?? '')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto, preenchimentoInicial])
 
   const dias = useMemo(() => proximosDias(14, new Date()), [])
 
@@ -88,6 +101,12 @@ export function NovoAgendamentoModal({
     if (!clienteId || !servicoId) return
     buscarPacoteDisponivel(clienteId, servicoId).then(setPacoteDisponivel)
   }, [clienteId, servicoId])
+
+  useEffect(() => {
+    setOcorrenciaCliente(null)
+    if (!clienteId) return
+    buscarOcorrenciaCliente(clienteId).then(setOcorrenciaCliente)
+  }, [clienteId])
 
   // Reseta a seleção de dia/horário quando trocam serviço ou profissional
   useEffect(() => {
@@ -214,6 +233,19 @@ export function NovoAgendamentoModal({
               </option>
             ))}
           </Select>
+          {ocorrenciaCliente && (
+            <p className="mt-1.5 flex items-start gap-1.5 rounded-md bg-warning-50 px-2.5 py-1.5 text-xs text-warning-500">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                {ocorrenciaCliente.total_faltas > 0 &&
+                  `Já faltou ${ocorrenciaCliente.total_faltas}x. `}
+                {ocorrenciaCliente.cancelamentos_ultima_hora > 0 &&
+                  `Cancelou em cima da hora ${ocorrenciaCliente.cancelamentos_ultima_hora}x. `}
+                {ocorrenciaCliente.total_reagendamentos > 0 &&
+                  `Já remarcou ${ocorrenciaCliente.total_reagendamentos}x.`}
+              </span>
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
