@@ -15,8 +15,8 @@ export function useAgendamentos(empresaId: string | undefined, inicio: Date, fim
     const { data, error } = await supabase
       .from('agendamentos')
       .select(
-        `id, empresa_id, cliente_id, funcionario_id, servico_id, data_hora_inicio, data_hora_fim, status, valor,
-         clientes ( nome ),
+        `id, empresa_id, cliente_id, funcionario_id, servico_id, data_hora_inicio, data_hora_fim, status, valor, origem,
+         clientes ( nome, whatsapp ),
          servicos ( nome ),
          funcionarios ( nome )`
       )
@@ -41,7 +41,8 @@ export function useAgendamentos(empresaId: string | undefined, inicio: Date, fim
       data_hora_fim: string
       status: StatusAgendamento
       valor: number | null
-      clientes: { nome: string } | null
+      origem: string | null
+      clientes: { nome: string; whatsapp: string | null } | null
       servicos: { nome: string } | null
       funcionarios: { nome: string } | null
     }
@@ -56,7 +57,9 @@ export function useAgendamentos(empresaId: string | undefined, inicio: Date, fim
       data_hora_fim: a.data_hora_fim,
       status: a.status,
       valor: a.valor,
+      origem: a.origem ?? 'painel',
       cliente_nome: a.clientes?.nome ?? 'Cliente',
+      cliente_whatsapp: a.clientes?.whatsapp ?? null,
       servico_nome: a.servicos?.nome ?? 'Serviço',
       funcionario_nome: a.funcionarios?.nome ?? null,
     }))
@@ -108,10 +111,11 @@ export function useAgendamentos(empresaId: string | undefined, inicio: Date, fim
   }
 
   async function reagendar(id: string, novoInicio: Date, novoFim: Date) {
-    const { error } = await supabase
-      .from('agendamentos')
-      .update({ data_hora_inicio: novoInicio.toISOString(), data_hora_fim: novoFim.toISOString() })
-      .eq('id', id)
+    const { error } = await supabase.rpc('reagendar_agendamento', {
+      p_id: id,
+      p_novo_inicio: novoInicio.toISOString(),
+      p_novo_fim: novoFim.toISOString(),
+    })
 
     if (!error) await carregar()
     return error
