@@ -160,6 +160,7 @@ export interface ListaEspera {
   servico_id: string
   funcionario_id: string | null
   data_desejada: string | null
+  horario_desejado: string
   observacoes: string | null
   status: 'aguardando' | 'notificado' | 'atendido' | 'cancelado'
   criado_em: string
