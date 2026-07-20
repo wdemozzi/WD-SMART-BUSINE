@@ -1,5 +1,6 @@
 import { format, isSameDay, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { Globe } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { HORA_INICIO_GRADE, HORA_FIM_GRADE, minutosDesde } from '@/lib/date-helpers'
 import type { AgendamentoCompleto } from '@/types/database'
@@ -106,7 +107,10 @@ export function GradeHorarios({
                         corPorStatus[a.status]
                       )}
                     >
-                      <p className="truncate font-medium">{format(inicio, 'HH:mm')} · {a.cliente_nome}</p>
+                      <p className="truncate font-medium">
+                        {format(inicio, 'HH:mm')} · {a.cliente_nome}
+                        {a.origem === 'online' && <Globe className="ml-1 inline h-2.5 w-2.5" />}
+                      </p>
                       <p className="truncate opacity-80">{a.servico_nome}</p>
                     </button>
                   )
