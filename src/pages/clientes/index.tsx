@@ -8,13 +8,14 @@ import { Card } from '@/components/ui/card'
 import { Tabs } from '@/components/ui/tabs'
 import { ClienteFormModal } from '@/components/clientes/cliente-form-modal'
 import { AbaRecorrencia } from '@/components/clientes/aba-recorrencia'
+import { AbaOcorrencias } from '@/components/clientes/aba-ocorrencias'
 import { FidelidadeClienteModal } from '@/components/clientes/fidelidade-cliente-modal'
 import { VenderPacoteModal } from '@/components/clientes/vender-pacote-modal'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { formatDate } from '@/lib/utils'
 import type { Cliente } from '@/types/database'
 
-type AbaClientes = 'todos' | 'recorrencia'
+type AbaClientes = 'todos' | 'recorrencia' | 'ocorrencias'
 
 export function ClientesPage() {
   const { empresa } = useAuth()
@@ -69,6 +70,7 @@ export function ClientesPage() {
         abas={[
           { valor: 'todos', rotulo: 'Todos' },
           { valor: 'recorrencia', rotulo: 'Recorrência' },
+          { valor: 'ocorrencias', rotulo: 'Ocorrências' },
         ]}
         ativa={aba}
         onChange={setAba}
@@ -150,8 +152,10 @@ export function ClientesPage() {
             </table>
           </Card>
         </>
-      ) : (
+      ) : aba === 'recorrencia' ? (
         <AbaRecorrencia clientes={recorrencia} carregando={carregandoRecorrencia} />
+      ) : (
+        <AbaOcorrencias empresaId={empresa?.id} />
       )}
 
       <ClienteFormModal
