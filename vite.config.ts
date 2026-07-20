@@ -12,17 +12,18 @@ export default defineConfig({
     },
   },
   build: {
-    // Mantém o limite de aviso mais alto caso precise
-    chunkSizeWarningLimit: 1000,
+    // Aumenta o limite para 1500 kB caso alguma dependência isolada ainda seja grande
+    chunkSizeWarningLimit: 1500,
     rolldownOptions: {
       output: {
-        // Nova sintaxe do Rolldown para Code Splitting
         codeSplitting: {
-          minSize: 20000, // Cria chunks apenas para pacotes maiores que 20kB
+          minSize: 10000, 
           groups: [
             {
               name: 'vendor',
-              test: /node_modules/, // Isola as bibliotecas externas em um arquivo próprio
+              // Regex corrigida sem espaços para garantir a captura na Vercel (Linux)
+              test: /[\\/]node_modules[\\/]/,
+              priority: 10,
             },
           ],
         },
