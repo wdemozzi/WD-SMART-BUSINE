@@ -72,6 +72,7 @@ export interface Agendamento {
   data_hora_fim: string
   status: StatusAgendamento
   valor: number | null
+  origem?: string
 }
 
 export type TipoDesconto = 'percentual' | 'valor_fixo'
@@ -186,6 +187,7 @@ export interface Produto {
 
 export interface AgendamentoCompleto extends Agendamento {
   cliente_nome: string
+  cliente_whatsapp: string | null
   servico_nome: string
   funcionario_nome: string | null
 }
