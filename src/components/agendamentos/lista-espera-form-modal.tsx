@@ -29,9 +29,8 @@ export function ListaEsperaFormModal({
     data_desejada: null,
     observacoes: '',
     ...valoresIniciais,
-    horario_desejado: valoresIniciais?.horario_desejado ?? '09:00',
+    horario_desejado: valoresIniciais?.horario_desejado || '09:00',
   }
-
 
   const [valores, setValores] = useState<ListaEsperaFormValues>(valoresVazios)
   const [enviando, setEnviando] = useState(false)
