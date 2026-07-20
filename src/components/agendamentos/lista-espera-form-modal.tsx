@@ -23,13 +23,12 @@ export function ListaEsperaFormModal({
   aoSalvar: (valores: ListaEsperaFormValues) => Promise<unknown>
 }) {
   const valoresVazios: ListaEsperaFormValues = {
-    cliente_id: 'william',
-    servico_id: 'Barba Desenhada',
-    funcionario_id: 'João Guilherme',
-    data_desejada: '20/06/2025',
-    horario_desejado: '09:00',
-    observacoes: 'Barba desenhada, sem bigode e com cavanhaque.',
-    ...valoresIniciais,
+    cliente_id: valoresIniciais?.cliente_id ?? '',
+    servico_id: valoresIniciais?.servico_id ?? '',
+    funcionario_id: valoresIniciais?.funcionario_id ?? null,
+    data_desejada: valoresIniciais?.data_desejada ?? null,
+    horario_desejado: valoresIniciais?.horario_desejado ?? '09:00',
+    observacoes: valoresIniciais?.observacoes ?? '',
   }
 
   const [valores, setValores] = useState<ListaEsperaFormValues>(valoresVazios)
