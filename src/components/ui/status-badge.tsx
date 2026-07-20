@@ -38,12 +38,26 @@ const rotulos: Record<string, string> = {
   estornado: 'Estornado',
 }
 
+const explicacoes: Record<string, string> = {
+  agendado: 'O horário foi reservado, mas ainda não foi confirmado pelo cliente.',
+  confirmado: 'O cliente confirmou presença para este horário.',
+  em_andamento: 'O atendimento está acontecendo agora.',
+  concluido: 'O atendimento foi finalizado.',
+  cancelado: 'Este agendamento foi cancelado.',
+  nao_compareceu: 'O cliente não compareceu a este horário.',
+  pendente: 'Pagamento ainda não foi realizado.',
+  pago: 'Pagamento confirmado.',
+  atrasado: 'O pagamento está com o prazo vencido.',
+  estornado: 'O valor foi devolvido ao cliente.',
+}
+
 export function StatusBadge({ status }: { status: string }) {
   const tom = tons[statusParaTom[status] ?? 'neutro']
   const rotulo = rotulos[status] ?? status
 
   return (
     <span
+      title={explicacoes[status]}
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
         tom.texto,
