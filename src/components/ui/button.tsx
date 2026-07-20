@@ -32,9 +32,17 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {}
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+  ({ className, variant, size, title, ...props }, ref) => {
+    // Ícones sem texto (aria-label) ganham tooltip nativo automaticamente,
+    // a menos que um título específico já tenha sido definido.
+    const tituloFinal = title ?? (size === 'icon' ? props['aria-label'] : undefined)
     return (
-      <button ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />
+      <button
+        ref={ref}
+        title={tituloFinal}
+        className={cn(buttonVariants({ variant, size }), className)}
+        {...props}
+      />
     )
   }
 )
