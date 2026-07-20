@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { Phone, Globe } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label, Input, Select } from '@/components/ui/form'
 import { StatusBadge } from '@/components/ui/status-badge'
+import { linkWhatsapp } from '@/hooks/use-notificacoes'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { AgendamentoCompleto, StatusAgendamento } from '@/types/database'
 
@@ -62,6 +64,7 @@ export function DetalheAgendamentoModal({
   }
 
   const podeAgir = !['cancelado', 'concluido', 'nao_compareceu'].includes(agendamento.status)
+  const agendadoOnline = agendamento.origem === 'online'
 
   return (
     <Dialog aberto={!!agendamento} onFechar={onFechar} titulo="Detalhes do agendamento">
@@ -72,6 +75,23 @@ export function DetalheAgendamentoModal({
               {agendamento.cliente_nome}
             </p>
             <p className="text-sm text-[var(--color-ink-600)]">{agendamento.servico_nome}</p>
+            {agendamento.cliente_whatsapp && (
+              <a
+                href={linkWhatsapp(agendamento.cliente_whatsapp, '')}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 flex items-center gap-1 text-xs text-[var(--color-ink-400)] hover:text-brand-500"
+              >
+                <Phone className="h-3 w-3" />
+                {agendamento.cliente_whatsapp}
+              </a>
+            )}
+            {agendadoOnline && (
+              <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-info-50 px-2 py-0.5 text-[10px] font-medium text-info-500">
+                <Globe className="h-2.5 w-2.5" />
+                Agendado online
+              </span>
+            )}
           </div>
           <StatusBadge status={agendamento.status} />
         </div>
