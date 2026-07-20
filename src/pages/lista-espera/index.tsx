@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Plus, Trash2, MessageCircle, Clock3 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Plus, Trash2, MessageCircle, Clock3, CalendarPlus } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useListaEspera } from '@/hooks/use-lista-espera'
 import { useCadastrosAgenda } from '@/hooks/use-cadastros-agenda'
@@ -24,12 +25,26 @@ const rotuloStatus: Record<ListaEspera['status'], { texto: string; cor: string }
 
 export function ListaEsperaPage() {
   const { empresa } = useAuth()
+  const navigate = useNavigate()
   const { entradas, carregando, adicionar, atualizarStatus, excluir } = useListaEspera(empresa?.id)
   const { clientes, servicos, funcionarios } = useCadastrosAgenda(empresa?.id)
   const [modalAberto, setModalAberto] = useState(false)
 
   function whatsappDoCliente(clienteId: string) {
     return clientes.find((c) => c.id === clienteId)?.whatsapp ?? null
+  }
+
+  function atenderCliente(e: ListaEspera) {
+    navigate('/agendamentos', {
+      state: {
+        atenderListaEspera: {
+          listaEsperaId: e.id,
+          clienteId: e.cliente_id,
+          servicoId: e.servico_id,
+          funcionarioId: e.funcionario_id,
+        },
+      },
+    })
   }
 
   return (
@@ -95,6 +110,14 @@ export function ListaEsperaPage() {
                       <div className="flex justify-end gap-1">
                         {(e.status === 'aguardando' || e.status === 'notificado') && (
                           <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Atender cliente"
+                              onClick={() => atenderCliente(e)}
+                            >
+                              <CalendarPlus className="h-4 w-4 text-brand-500" />
+                            </Button>
                             {numero && (
                               <a
                                 href={linkWhatsapp(numero, mensagemVagaAberta(e.cliente_nome ?? '', e.servico_nome ?? ''))}
