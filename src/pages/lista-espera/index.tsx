@@ -55,6 +55,7 @@ export function ListaEsperaPage() {
               <th className="px-4 py-3 font-medium">Serviço</th>
               <th className="px-4 py-3 font-medium">Profissional</th>
               <th className="px-4 py-3 font-medium">Data desejada</th>
+              <th className="px-4 py-3 font-medium">Horário</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium text-right">Ações</th>
             </tr>
@@ -62,13 +63,13 @@ export function ListaEsperaPage() {
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-[var(--color-ink-400)]">
+                <td colSpan={7} className="px-4 py-6 text-center text-[var(--color-ink-400)]">
                   Carregando…
                 </td>
               </tr>
             ) : entradas.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-[var(--color-ink-400)]">
+                <td colSpan={7} className="px-4 py-12 text-center text-[var(--color-ink-400)]">
                   <Clock3 className="mx-auto mb-2 h-5 w-5" />
                   Ninguém na lista de espera no momento.
                 </td>
@@ -84,6 +85,7 @@ export function ListaEsperaPage() {
                     <td className="px-4 py-3 text-[var(--color-ink-600)]">
                       {e.data_desejada ? formatDate(e.data_desejada) : 'Qualquer dia'}
                     </td>
+                    <td className="px-4 py-3 font-data text-[var(--color-ink-600)]">{e.horario_desejado.slice(0, 5)}</td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${rotuloStatus[e.status].cor}`}>
                         {rotuloStatus[e.status].texto}
