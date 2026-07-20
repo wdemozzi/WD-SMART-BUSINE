@@ -27,10 +27,11 @@ export function ListaEsperaFormModal({
     servico_id: '',
     funcionario_id: null,
     data_desejada: null,
-    horario_desejado: '09:00',
     observacoes: '',
     ...valoresIniciais,
+    horario_desejado: valoresIniciais?.horario_desejado ?? '09:00',
   }
+
 
   const [valores, setValores] = useState<ListaEsperaFormValues>(valoresVazios)
   const [enviando, setEnviando] = useState(false)
