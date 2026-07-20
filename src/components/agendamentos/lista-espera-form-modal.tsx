@@ -27,6 +27,7 @@ export function ListaEsperaFormModal({
     servico_id: '',
     funcionario_id: null,
     data_desejada: null,
+    horario_desejado: '09:00',
     observacoes: '',
     ...valoresIniciais,
   }
@@ -105,16 +106,30 @@ export function ListaEsperaFormModal({
           </div>
         </div>
 
-        <div>
-          <Label htmlFor="le_data">Data desejada (opcional)</Label>
-          <Input
-            id="le_data"
-            type="date"
-            value={valores.data_desejada ?? ''}
-            onChange={(e) => atualizarCampo('data_desejada', e.target.value || null)}
-          />
-          <p className="mt-1 text-xs text-[var(--color-ink-400)]">Deixe em branco para avisar em qualquer dia que abrir vaga.</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="le_data">Data desejada (opcional)</Label>
+            <Input
+              id="le_data"
+              type="date"
+              value={valores.data_desejada ?? ''}
+              onChange={(e) => atualizarCampo('data_desejada', e.target.value || null)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="le_horario">Horário desejado</Label>
+            <Input
+              id="le_horario"
+              type="time"
+              value={valores.horario_desejado}
+              onChange={(e) => atualizarCampo('horario_desejado', e.target.value)}
+              required
+            />
+          </div>
         </div>
+        <p className="-mt-2 text-xs text-[var(--color-ink-400)]">
+          Deixe a data em branco para avisar em qualquer dia que abrir vaga próxima desse horário.
+        </p>
 
         <div>
           <Label htmlFor="le_obs">Observações (opcional)</Label>
