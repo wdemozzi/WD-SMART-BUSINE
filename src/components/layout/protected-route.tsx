@@ -26,15 +26,16 @@ export function ProtectedRoute({
   // após o cadastro, mas a empresa ainda não foi criada)
   if (!perfil) return <Navigate to="/completar-cadastro" replace />
 
-  // Bloqueia acesso se o trial expirou ou a assinatura não está em dia
-  // (super_admin nunca tem empresa, então não é afetado por esta checagem)
+  // Bloqueia acesso apenas em casos definitivos (trial expirado, suspensa,
+  // cancelada). "Inadimplente" NÃO bloqueia — vira um aviso persistente na
+  // tela (ver AppLayout), para a pessoa conseguir chegar até o menu Planos
+  // e resolver a pendência sem ficar trancada para fora do próprio sistema.
   if (perfil.role !== 'super_admin' && empresa) {
     if (empresa.status === 'trial' && empresa.trial_expira_em && new Date(empresa.trial_expira_em) < new Date()) {
       return <AcessoBloqueadoPage motivo="trial_expirado" />
     }
     if (empresa.status === 'suspensa') return <AcessoBloqueadoPage motivo="suspensa" />
     if (empresa.status === 'cancelada') return <AcessoBloqueadoPage motivo="cancelada" />
-    if (empresa.status === 'inadimplente') return <AcessoBloqueadoPage motivo="inadimplente" />
   }
 
   if (papeisPermitidos && perfil && !papeisPermitidos.includes(perfil.role)) {
