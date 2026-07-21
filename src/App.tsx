@@ -14,6 +14,7 @@ import { FinanceiroPage } from '@/pages/financeiro'
 import { RelatoriosPage } from '@/pages/relatorios'
 import { ComissoesPage } from '@/pages/comissoes'
 import { ListaEsperaPage } from '@/pages/lista-espera'
+import { PlanosPage } from '@/pages/planos'
 import { WhatsappPage } from '@/pages/whatsapp'
 import { IaPage } from '@/pages/ia'
 import { ConfiguracoesPage } from '@/pages/configuracoes'
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="/agendamentos" element={<AgendamentosPage />} />
             <Route path="/pdv" element={<PdvPage />} />
             <Route path="/lista-espera" element={<ListaEsperaPage />} />
+            <Route path="/planos" element={<PlanosPage />} />
             <Route
               path="/financeiro"
               element={
