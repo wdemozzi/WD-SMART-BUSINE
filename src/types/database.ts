@@ -22,6 +22,7 @@ export interface Empresa {
   cor_primaria: string
   status: 'ativa' | 'inadimplente' | 'suspensa' | 'cancelada' | 'trial'
   trial_expira_em: string | null
+  plano_id: string | null
 }
 
 export interface Perfil {
