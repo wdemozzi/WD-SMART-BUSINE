@@ -11,6 +11,7 @@ import {
   FileBarChart,
   HandCoins,
   Clock3,
+  CreditCard,
   type LucideIcon,
 } from 'lucide-react'
 import type { UserRole } from '@/types/database'
@@ -30,6 +31,7 @@ export const navItems: NavItem[] = [
   { label: 'PDV', href: '/pdv', icon: ShoppingCart, roles: ['admin_empresa', 'funcionario'] },
   { label: 'Financeiro', href: '/financeiro', icon: Wallet, roles: ['admin_empresa'] },
   { label: 'Comissões', href: '/comissoes', icon: HandCoins, roles: ['admin_empresa'] },
+  { label: 'Planos', href: '/planos', icon: CreditCard, roles: ['admin_empresa'] },
   { label: 'Relatórios', href: '/relatorios', icon: FileBarChart, roles: ['admin_empresa'] },
   { label: 'WhatsApp', href: '/whatsapp', icon: MessageCircle, roles: ['admin_empresa', 'funcionario'] },
   { label: 'Assistente IA', href: '/ia', icon: Bot, roles: ['admin_empresa'] },
