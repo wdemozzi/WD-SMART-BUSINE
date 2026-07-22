@@ -82,30 +82,15 @@ export function useAgendamentos(empresaId: string | undefined, inicio: Date, fim
     return error
   }
 
-  // Conclui o atendimento E lança a entrada correspondente no fluxo de caixa,
-  // tudo em um único passo — evita esquecer de registrar o pagamento depois.
+  // Conclui o atendimento E lança UMA única entrada no fluxo de caixa,
+  // já somando os produtos consumidos durante o atendimento (se houver).
   async function concluirComPagamento(agendamento: AgendamentoCompleto, metodo: string) {
-    const { error: erroStatus } = await supabase
-      .from('agendamentos')
-      .update({ status: 'concluido' as StatusAgendamento })
-      .eq('id', agendamento.id)
+    const { error } = await supabase.rpc('concluir_agendamento_com_pagamento', {
+      p_agendamento_id: agendamento.id,
+      p_metodo: metodo,
+    })
 
-    if (erroStatus) return erroStatus
-
-    if (agendamento.valor != null && agendamento.valor > 0) {
-      const { error: erroTransacao } = await supabase.from('transacoes_financeiras').insert({
-        empresa_id: empresaId,
-        tipo: 'entrada',
-        origem: 'agendamento',
-        origem_id: agendamento.id,
-        descricao: `Atendimento: ${agendamento.servico_nome} — ${agendamento.cliente_nome}`,
-        valor: agendamento.valor,
-        metodo,
-        data_transacao: new Date().toISOString(),
-      })
-      if (erroTransacao) return erroTransacao
-    }
-
+    if (error) return error
     await carregar()
     return null
   }
