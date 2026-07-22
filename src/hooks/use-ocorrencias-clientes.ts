@@ -13,6 +13,38 @@ export interface OcorrenciaCliente {
   ultima_ocorrencia_em: string | null
 }
 
+// Busca o último atendimento concluído do cliente, para sugerir "repetir o
+// mesmo atendimento" ao criar um novo agendamento.
+export async function buscarUltimoAtendimento(clienteId: string) {
+  const { data } = await supabase
+    .from('agendamentos')
+    .select('data_hora_inicio, servico_id, funcionario_id, servicos(nome), funcionarios(nome)')
+    .eq('cliente_id', clienteId)
+    .eq('status', 'concluido')
+    .order('data_hora_inicio', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!data) return null
+
+  type LinhaBruta = {
+    data_hora_inicio: string
+    servico_id: string
+    funcionario_id: string | null
+    servicos: { nome: string } | null
+    funcionarios: { nome: string } | null
+  }
+  const linha = data as unknown as LinhaBruta
+
+  return {
+    dataHoraInicio: linha.data_hora_inicio,
+    servicoId: linha.servico_id,
+    servicoNome: linha.servicos?.nome ?? 'Serviço',
+    funcionarioId: linha.funcionario_id,
+    funcionarioNome: linha.funcionarios?.nome ?? null,
+  }
+}
+
 export function useOcorrenciasClientes(empresaId: string | undefined) {
   const [ocorrencias, setOcorrencias] = useState<OcorrenciaCliente[]>([])
   const [carregando, setCarregando] = useState(true)
