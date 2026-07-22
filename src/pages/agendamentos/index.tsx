@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useAgendamentos } from '@/hooks/use-agendamentos'
 import { useCadastrosAgenda } from '@/hooks/use-cadastros-agenda'
 import { useListaEspera } from '@/hooks/use-lista-espera'
+import { useProdutos } from '@/hooks/use-produtos'
 import { intervaloDaVisao, diasDoIntervalo, navegar, type VisaoCalendario } from '@/lib/date-helpers'
 import { CalendarToolbar } from '@/components/agendamentos/calendar-toolbar'
 import { GradeHorarios } from '@/components/agendamentos/grade-horarios'
@@ -39,6 +40,7 @@ export function AgendamentosPage() {
     fim
   )
   const { clientes, servicos, funcionarios } = useCadastrosAgenda(empresa?.id)
+  const { produtos } = useProdutos(empresa?.id)
   const { atualizarStatus: atualizarStatusListaEspera } = useListaEspera(empresa?.id)
 
   // Chegou aqui vindo do botão "Atender Cliente" da Lista de Espera —
@@ -149,6 +151,7 @@ export function AgendamentosPage() {
         aoAtualizarStatus={atualizarStatus}
         aoConcluirComPagamento={concluirComPagamento}
         aoReagendar={reagendar}
+        produtos={produtos.filter((p) => p.ativo)}
       />
     </div>
   )
