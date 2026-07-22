@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Users, CalendarDays, Wallet, Download } from 'lucide-react'
+import { Users, CalendarDays, Wallet, Download, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { exportarCsv } from '@/lib/export-csv'
@@ -122,6 +122,37 @@ export function RelatoriosPage() {
     setGerando(null)
   }
 
+  async function exportarEmails() {
+    if (!empresa?.id) return
+    setGerando('emails')
+
+    const { data } = await supabase
+      .from('clientes')
+      .select('nome, email, whatsapp, cidade, criado_em')
+      .eq('empresa_id', empresa.id)
+      .not('email', 'is', null)
+      .neq('email', '')
+      .order('nome')
+
+    const linhas = (data ?? []).map((c: any) => ({
+      nome: c.nome,
+      email: c.email,
+      whatsapp: c.whatsapp ?? '',
+      cidade: c.cidade ?? '',
+      cliente_desde: formatDate(c.criado_em),
+    }))
+
+    exportarCsv(`emails_clientes_${hoje()}`, [
+      { chave: 'nome', rotulo: 'Nome' },
+      { chave: 'email', rotulo: 'E-mail' },
+      { chave: 'whatsapp', rotulo: 'WhatsApp' },
+      { chave: 'cidade', rotulo: 'Cidade' },
+      { chave: 'cliente_desde', rotulo: 'Cliente desde' },
+    ], linhas)
+
+    setGerando(null)
+  }
+
   return (
     <div className="space-y-5">
       <div>
@@ -144,7 +175,7 @@ export function RelatoriosPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -195,6 +226,24 @@ export function RelatoriosPage() {
             <Button size="sm" className="w-full" onClick={exportarFinanceiro} disabled={gerando === 'financeiro'}>
               <Download className="h-4 w-4" />
               {gerando === 'financeiro' ? 'Gerando…' : 'Exportar CSV'}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              E-mails
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-3 text-xs text-[var(--color-ink-400)]">
+              Lista de e-mails cadastrados, para campanhas de marketing e promoções.
+            </p>
+            <Button size="sm" className="w-full" onClick={exportarEmails} disabled={gerando === 'emails'}>
+              <Download className="h-4 w-4" />
+              {gerando === 'emails' ? 'Gerando…' : 'Exportar CSV'}
             </Button>
           </CardContent>
         </Card>
