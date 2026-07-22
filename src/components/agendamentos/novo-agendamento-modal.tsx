@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Tag, X, Clock, AlertTriangle } from 'lucide-react'
+import { Tag, X, Clock, AlertTriangle, Sparkles } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { Label, Input, Select, Textarea } from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
 import { aplicarCupom, previsualizarCupom } from '@/hooks/use-cupons'
 import { buscarHorariosDisponiveis } from '@/hooks/use-agendamento-publico'
 import { buscarPacoteDisponivel } from '@/hooks/use-vendas-pacotes'
-import { buscarOcorrenciaCliente, type OcorrenciaCliente } from '@/hooks/use-ocorrencias-clientes'
-import { formatCurrency, cn } from '@/lib/utils'
+import { buscarOcorrenciaCliente, buscarUltimoAtendimento, type OcorrenciaCliente } from '@/hooks/use-ocorrencias-clientes'
+import { formatCurrency, formatDate, cn } from '@/lib/utils'
 import type { Cliente, Servico, Funcionario } from '@/types/database'
 
 interface NovoAgendamentoModalProps {
@@ -74,6 +74,8 @@ export function NovoAgendamentoModal({
   const [pacoteDisponivel, setPacoteDisponivel] = useState<{ vendaPacoteId: string; pacoteNome: string; restantes: number } | null>(null)
   const [usarPacote, setUsarPacote] = useState(false)
   const [ocorrenciaCliente, setOcorrenciaCliente] = useState<OcorrenciaCliente | null>(null)
+  const [sugestaoRepetir, setSugestaoRepetir] = useState<Awaited<ReturnType<typeof buscarUltimoAtendimento>>>(null)
+  const [sugestaoDispensada, setSugestaoDispensada] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
@@ -107,6 +109,20 @@ export function NovoAgendamentoModal({
     if (!clienteId) return
     buscarOcorrenciaCliente(clienteId).then(setOcorrenciaCliente)
   }, [clienteId])
+
+  useEffect(() => {
+    setSugestaoRepetir(null)
+    setSugestaoDispensada(false)
+    if (!clienteId) return
+    buscarUltimoAtendimento(clienteId).then(setSugestaoRepetir)
+  }, [clienteId])
+
+  function aplicarSugestao() {
+    if (!sugestaoRepetir) return
+    setServicoId(sugestaoRepetir.servicoId)
+    setFuncionarioId(sugestaoRepetir.funcionarioId ?? '')
+    setSugestaoDispensada(true)
+  }
 
   // Reseta a seleção de dia/horário quando trocam serviço ou profissional
   useEffect(() => {
@@ -247,6 +263,27 @@ export function NovoAgendamentoModal({
             </p>
           )}
         </div>
+
+        {sugestaoRepetir && !sugestaoDispensada && (
+          <div className="flex items-start gap-2 rounded-md border border-brand-500/30 bg-brand-50 px-3 py-2 text-xs dark:bg-brand-500/10">
+            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-500" />
+            <div className="flex-1">
+              <p className="text-brand-700 dark:text-brand-400">
+                Na última visita ({formatDate(sugestaoRepetir.dataHoraInicio)}), fez{' '}
+                <strong>{sugestaoRepetir.servicoNome}</strong>
+                {sugestaoRepetir.funcionarioNome && <> com {sugestaoRepetir.funcionarioNome}</>}. Repetir o mesmo?
+              </p>
+              <div className="mt-1.5 flex gap-2">
+                <Button type="button" size="sm" variant="secondary" onClick={aplicarSugestao}>
+                  Repetir atendimento
+                </Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setSugestaoDispensada(true)}>
+                  Não, obrigado
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div>
