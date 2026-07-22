@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Phone, Globe } from 'lucide-react'
+import { Phone, Globe, Plus, Trash2, Package } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label, Input, Select } from '@/components/ui/form'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { linkWhatsapp } from '@/hooks/use-notificacoes'
+import { useProdutosDoAgendamento } from '@/hooks/use-produtos-do-agendamento'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import type { AgendamentoCompleto, StatusAgendamento } from '@/types/database'
+import type { AgendamentoCompleto, StatusAgendamento, Produto } from '@/types/database'
 
 function paraInputDatetimeLocal(iso: string) {
   const data = new Date(iso)
@@ -20,18 +21,26 @@ export function DetalheAgendamentoModal({
   aoAtualizarStatus,
   aoConcluirComPagamento,
   aoReagendar,
+  produtos,
 }: {
   agendamento: AgendamentoCompleto | null
   onFechar: () => void
   aoAtualizarStatus: (id: string, status: StatusAgendamento, motivo?: string) => Promise<unknown>
   aoConcluirComPagamento: (agendamento: AgendamentoCompleto, metodo: string) => Promise<unknown>
   aoReagendar: (id: string, novoInicio: Date, novoFim: Date) => Promise<unknown>
+  produtos: Produto[]
 }) {
   const [modoReagendar, setModoReagendar] = useState(false)
   const [modoPagamento, setModoPagamento] = useState(false)
   const [metodoPagamento, setMetodoPagamento] = useState('pix')
   const [novoInicio, setNovoInicio] = useState('')
   const [carregando, setCarregando] = useState(false)
+  const [produtoParaAdicionar, setProdutoParaAdicionar] = useState('')
+  const [quantidadeParaAdicionar, setQuantidadeParaAdicionar] = useState(1)
+  const [erroProduto, setErroProduto] = useState<string | null>(null)
+
+  const { itens: produtosDoAtendimento, totalProdutos, adicionar: adicionarProduto, remover: removerProduto } =
+    useProdutosDoAgendamento(agendamento?.id)
 
   if (!agendamento) return null
 
@@ -61,6 +70,18 @@ export function DetalheAgendamentoModal({
     setCarregando(false)
     setModoPagamento(false)
     onFechar()
+  }
+
+  async function handleAdicionarProduto() {
+    if (!produtoParaAdicionar) return
+    setErroProduto(null)
+    const resultado = await adicionarProduto(produtoParaAdicionar, quantidadeParaAdicionar)
+    if (!resultado.sucesso) {
+      setErroProduto(resultado.mensagem_erro)
+      return
+    }
+    setProdutoParaAdicionar('')
+    setQuantidadeParaAdicionar(1)
   }
 
   const podeAgir = !['cancelado', 'concluido', 'nao_compareceu'].includes(agendamento.status)
@@ -110,10 +131,64 @@ export function DetalheAgendamentoModal({
           <div>
             <dt className="text-[var(--color-ink-400)]">Valor</dt>
             <dd className="font-data text-[var(--color-ink-900)]">
-              {agendamento.valor != null ? formatCurrency(agendamento.valor) : '—'}
+              {agendamento.valor != null ? formatCurrency(agendamento.valor + totalProdutos) : '—'}
+              {totalProdutos > 0 && (
+                <span className="ml-1 text-xs font-normal text-[var(--color-ink-400)]">
+                  (serviço + produtos)
+                </span>
+              )}
             </dd>
           </div>
         </dl>
+
+        {podeAgir && (
+          <div className="space-y-2 rounded-md border border-[var(--color-border)] p-3">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-ink-900)]">
+              <Package className="h-3.5 w-3.5 text-brand-500" />
+              Produtos consumidos no atendimento
+            </p>
+
+            {produtosDoAtendimento.length > 0 && (
+              <div className="space-y-1">
+                {produtosDoAtendimento.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between text-sm">
+                    <span className="text-[var(--color-ink-600)]">
+                      {item.quantidade}x {item.produto_nome}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-data text-[var(--color-ink-900)]">{formatCurrency(item.subtotal)}</span>
+                      <button onClick={() => removerProduto(item.id)} aria-label="Remover produto">
+                        <Trash2 className="h-3.5 w-3.5 text-danger-500" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Select value={produtoParaAdicionar} onChange={(e) => setProdutoParaAdicionar(e.target.value)} className="flex-1">
+                <option value="">Adicionar produto…</option>
+                {produtos.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome} ({formatCurrency(p.preco_venda)})
+                  </option>
+                ))}
+              </Select>
+              <Input
+                type="number"
+                min={1}
+                value={quantidadeParaAdicionar}
+                onChange={(e) => setQuantidadeParaAdicionar(Number(e.target.value))}
+                className="w-16"
+              />
+              <Button type="button" variant="secondary" size="icon" onClick={handleAdicionarProduto} disabled={!produtoParaAdicionar}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {erroProduto && <p className="text-xs text-danger-500">{erroProduto}</p>}
+          </div>
+        )}
 
         {modoReagendar ? (
           <div className="space-y-3 rounded-md border border-[var(--color-border)] p-3">
@@ -136,9 +211,13 @@ export function DetalheAgendamentoModal({
         ) : modoPagamento ? (
           <div className="space-y-3 rounded-md border border-[var(--color-border)] p-3">
             <p className="text-sm text-[var(--color-ink-600)]">
-              Confirmar conclusão do atendimento{agendamento.valor != null && agendamento.valor > 0 ? ` e lançar ${formatCurrency(agendamento.valor)} no fluxo de caixa` : ''}?
+              Confirmar conclusão do atendimento
+              {(agendamento.valor ?? 0) + totalProdutos > 0
+                ? ` e lançar ${formatCurrency((agendamento.valor ?? 0) + totalProdutos)} no fluxo de caixa`
+                : ''}
+              ?
             </p>
-            {agendamento.valor != null && agendamento.valor > 0 && (
+            {(agendamento.valor ?? 0) + totalProdutos > 0 && (
               <div>
                 <Label htmlFor="metodo-pagamento">Forma de pagamento</Label>
                 <Select id="metodo-pagamento" value={metodoPagamento} onChange={(e) => setMetodoPagamento(e.target.value)}>
