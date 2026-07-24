@@ -191,6 +191,10 @@ export interface AgendamentoCompleto extends Agendamento {
   cliente_whatsapp: string | null
   servico_nome: string
   funcionario_nome: string | null
+  funcionario_percentual_comissao: number | null
+  cupom_id: string | null
+  cupom_codigo: string | null
+  valor_desconto: number | null
 }
 
 export interface ContaReceber {
