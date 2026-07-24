@@ -103,7 +103,7 @@ export function AgendamentoPublicoPage() {
       const agora = new Date()
       const ehHoje = diaSelecionado.toDateString() === agora.toDateString()
       const filtrada = ehHoje
-        ? lista.filter((h) => new Date(h).getTime() > agora.getTime())
+        ? lista.filter((h: string) => new Date(h).getTime() > agora.getTime())
         : lista
       setHorarios(filtrada)
       setCarregandoHorarios(false)
