@@ -117,28 +117,52 @@ export function DetalheAgendamentoModal({
           <StatusBadge status={agendamento.status} />
         </div>
 
-        <dl className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <dt className="text-[var(--color-ink-400)]">Data e horário</dt>
-            <dd className="font-data text-[var(--color-ink-900)]">
-              {formatDate(agendamento.data_hora_inicio, true)}
-            </dd>
+        <dl className="space-y-2 text-sm">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <dt className="text-[var(--color-ink-400)]">Data e horário</dt>
+              <dd className="font-data text-[var(--color-ink-900)]">
+                {formatDate(agendamento.data_hora_inicio, true)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[var(--color-ink-400)]">Profissional</dt>
+              <dd className="text-[var(--color-ink-900)]">{agendamento.funcionario_nome ?? 'Sem preferência'}</dd>
+            </div>
           </div>
-          <div>
-            <dt className="text-[var(--color-ink-400)]">Profissional</dt>
-            <dd className="text-[var(--color-ink-900)]">{agendamento.funcionario_nome ?? 'Sem preferência'}</dd>
-          </div>
-          <div>
-            <dt className="text-[var(--color-ink-400)]">Valor</dt>
-            <dd className="font-data text-[var(--color-ink-900)]">
-              {agendamento.valor != null ? formatCurrency(agendamento.valor + totalProdutos) : '—'}
-              {totalProdutos > 0 && (
-                <span className="ml-1 text-xs font-normal text-[var(--color-ink-400)]">
-                  (serviço + produtos)
-                </span>
-              )}
-            </dd>
-          </div>
+
+          {/* Composição do valor: serviço + produtos - desconto = total */}
+          {(agendamento.valor != null || totalProdutos > 0) && (
+            <div className="rounded-md border border-[var(--color-border)] p-3">
+              <p className="mb-2 text-xs font-medium text-[var(--color-ink-400)]">Composição do valor</p>
+              <div className="space-y-1">
+                {agendamento.valor != null && agendamento.valor > 0 && (
+                  <div className="flex justify-between text-xs text-[var(--color-ink-600)]">
+                    <span>Serviço ({agendamento.servico_nome})</span>
+                    <span className="font-data">{formatCurrency(agendamento.valor)}</span>
+                  </div>
+                )}
+                {produtosDoAtendimento.map((item) => (
+                  <div key={item.id} className="flex justify-between text-xs text-[var(--color-ink-600)]">
+                    <span>{item.quantidade}x {item.produto_nome}</span>
+                    <span className="font-data">{formatCurrency(item.subtotal)}</span>
+                  </div>
+                ))}
+                {agendamento.valor_desconto != null && agendamento.valor_desconto > 0 && (
+                  <div className="flex justify-between text-xs text-success-500">
+                    <span>Desconto{agendamento.cupom_codigo ? ` (${agendamento.cupom_codigo})` : ''}</span>
+                    <span className="font-data">- {formatCurrency(agendamento.valor_desconto)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-[var(--color-border)] pt-1.5 text-sm font-semibold text-[var(--color-ink-900)]">
+                  <span>Total</span>
+                  <span className="font-data">
+                    {formatCurrency(Math.max((agendamento.valor ?? 0) + totalProdutos - (agendamento.valor_desconto ?? 0), 0))}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </dl>
 
         {podeAgir && (
@@ -210,14 +234,43 @@ export function DetalheAgendamentoModal({
           </div>
         ) : modoPagamento ? (
           <div className="space-y-3 rounded-md border border-[var(--color-border)] p-3">
-            <p className="text-sm text-[var(--color-ink-600)]">
-              Confirmar conclusão do atendimento
-              {(agendamento.valor ?? 0) + totalProdutos > 0
-                ? ` e lançar ${formatCurrency((agendamento.valor ?? 0) + totalProdutos)} no fluxo de caixa`
-                : ''}
-              ?
+            <p className="text-sm font-medium text-[var(--color-ink-900)]">
+              Confirmar conclusão do atendimento?
             </p>
-            {(agendamento.valor ?? 0) + totalProdutos > 0 && (
+
+            {/* Quebra detalhada do valor: serviço + produtos - desconto = total */}
+            {((agendamento.valor ?? 0) + totalProdutos > 0) && (
+              <div className="rounded-md bg-[var(--color-canvas)] p-2.5">
+                <div className="space-y-1 text-sm">
+                  {agendamento.valor != null && agendamento.valor > 0 && (
+                    <div className="flex justify-between text-[var(--color-ink-600)]">
+                      <span>Serviço ({agendamento.servico_nome})</span>
+                      <span className="font-data">{formatCurrency(agendamento.valor)}</span>
+                    </div>
+                  )}
+                  {produtosDoAtendimento.map((item) => (
+                    <div key={item.id} className="flex justify-between text-[var(--color-ink-600)]">
+                      <span>{item.quantidade}x {item.produto_nome}</span>
+                      <span className="font-data">{formatCurrency(item.subtotal)}</span>
+                    </div>
+                  ))}
+                  {agendamento.valor_desconto != null && agendamento.valor_desconto > 0 && (
+                    <div className="flex justify-between text-success-500">
+                      <span>Desconto{agendamento.cupom_codigo ? ` (${agendamento.cupom_codigo})` : ''}</span>
+                      <span className="font-data">- {formatCurrency(agendamento.valor_desconto)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-[var(--color-border)] pt-1.5 text-sm font-semibold text-[var(--color-ink-900)]">
+                    <span>Total a lançar no fluxo</span>
+                    <span className="font-data">
+                      {formatCurrency(Math.max((agendamento.valor ?? 0) + totalProdutos - (agendamento.valor_desconto ?? 0), 0))}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {((agendamento.valor ?? 0) + totalProdutos > 0) && (
               <div>
                 <Label htmlFor="metodo-pagamento">Forma de pagamento</Label>
                 <Select id="metodo-pagamento" value={metodoPagamento} onChange={(e) => setMetodoPagamento(e.target.value)}>
@@ -228,6 +281,14 @@ export function DetalheAgendamentoModal({
                   <option value="outro">Outro</option>
                 </Select>
               </div>
+            )}
+
+            {/* Previsão de comissão do profissional */}
+            {agendamento.funcionario_id && agendamento.funcionario_nome && (agendamento.valor ?? 0) > 0 && (
+              <p className="rounded-md bg-warning-50 px-2.5 py-1.5 text-xs text-warning-500">
+                Comissão prevista para {agendamento.funcionario_nome}: calculada automaticamente
+                conforme o % de comissão configurado.
+              </p>
             )}
             <div className="flex justify-end gap-2">
               <Button variant="secondary" size="sm" onClick={() => setModoPagamento(false)}>
