@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Users, CalendarCheck, TrendingUp, Percent } from 'lucide-react'
+import { Users, CalendarCheck, TrendingUp, Percent, HandCoins } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { startOfMonth, endOfMonth } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { useRecorrenciaClientes } from '@/hooks/use-recorrencia-clientes'
@@ -14,6 +15,7 @@ export function DashboardPage() {
   const { empresa, perfil } = useAuth()
   const [resumo, setResumo] = useState<DashboardResumo | null>(null)
   const [receitaDiaria, setReceitaDiaria] = useState<{ dia: string; receita: number }[]>([])
+  const [comissoesPendentes, setComissoesPendentes] = useState(0)
   const [carregando, setCarregando] = useState(true)
   const { inativos } = useRecorrenciaClientes(empresa?.id)
 
@@ -21,13 +23,20 @@ export function DashboardPage() {
     if (!empresa?.id) return
 
     async function carregar() {
-      const [{ data: resumoData }, { data: receitaData }] = await Promise.all([
+      const [{ data: resumoData }, { data: receitaData }, { data: comissoesData }] = await Promise.all([
         supabase.from('vw_dashboard_resumo').select('*').eq('empresa_id', empresa!.id).single(),
         supabase
           .from('vw_receita_diaria')
           .select('*')
           .eq('empresa_id', empresa!.id)
           .order('dia', { ascending: true }),
+        supabase
+          .from('comissoes')
+          .select('valor_comissao')
+          .eq('empresa_id', empresa!.id)
+          .eq('status', 'pendente')
+          .gte('criado_em', startOfMonth(new Date()).toISOString())
+          .lte('criado_em', endOfMonth(new Date()).toISOString()),
       ])
 
       setResumo(resumoData as DashboardResumo | null)
@@ -36,6 +45,9 @@ export function DashboardPage() {
           dia: new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(new Date(r.dia)),
           receita: Number(r.receita ?? 0),
         }))
+      )
+      setComissoesPendentes(
+        (comissoesData ?? []).reduce((soma: number, c: { valor_comissao: number }) => soma + Number(c.valor_comissao), 0)
       )
       setCarregando(false)
     }
@@ -81,6 +93,11 @@ export function DashboardPage() {
             label="Taxa de comparecimento"
             value={`${resumo?.taxa_comparecimento_pct ?? 0}%`}
             icon={Percent}
+          />
+          <MetricCard
+            label="Comissões pendentes (mês)"
+            value={formatCurrency(comissoesPendentes)}
+            icon={HandCoins}
           />
         </div>
       )}
