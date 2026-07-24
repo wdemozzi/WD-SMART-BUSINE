@@ -22,9 +22,9 @@ export function ProtectedRoute({
 
   if (!session) return <Navigate to="/login" replace />
 
-  // Usuário autenticado mas ainda sem empresa vinculada (confirmou e-mail
-  // após o cadastro, mas a empresa ainda não foi criada)
-  if (!perfil) return <Navigate to="/completar-cadastro" replace />
+  // Usuário autenticado mas o perfil ainda está carregando.
+  // Só redireciona se o carregamento do perfil terminou E não encontrou perfil.
+  if (!perfil && !carregando) return <Navigate to="/completar-cadastro" replace />
 
   // Bloqueia acesso apenas em casos definitivos (trial expirado, suspensa,
   // cancelada). "Inadimplente" NÃO bloqueia — vira um aviso persistente na

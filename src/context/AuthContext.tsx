@@ -49,16 +49,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCarregando(true)
       setSession(session)
       if (session?.user) {
-        carregarPerfil(session.user.id)
+        carregarPerfil(session.user.id).finally(() => setCarregando(false))
       } else {
         setPerfil(null)
         setEmpresa(null)
+        setCarregando(false)
       }
     })
 
-    return () => listener.subscription.unsubscribe()
+    // Quando o usuário volta pra aba com o botão voltar do navegador,
+    // força verificação da sessão ativa. Se deslogou, o estado já reflete.
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) {
+            setSession(null)
+            setPerfil(null)
+            setEmpresa(null)
+            setCarregando(false)
+          }
+        })
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      listener.subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   async function signOut() {
