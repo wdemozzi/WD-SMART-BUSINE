@@ -34,8 +34,8 @@ begin
   end if;
 
   if v_funcionario_id is not null then
-    insert into comissoes (empresa_id, funcionario_id, origem, descricao, valor_base, percentual_aplicado, valor_comissao, status, criado_em)
-    select v_empresa_id, v_funcionario_id, 'agendamento', v_servico_nome, v_servico_valor,
+    insert into comissoes (empresa_id, funcionario_id, origem, origem_id, descricao, valor_base, percentual_aplicado, valor_comissao, status, criado_em)
+    select v_empresa_id, v_funcionario_id, 'agendamento', p_agendamento_id, v_servico_nome, v_servico_valor,
       coalesce(f.percentual_comissao, 0),
       round(v_servico_valor * coalesce(f.percentual_comissao, 0) / 100, 2),
       'pendente', now()
