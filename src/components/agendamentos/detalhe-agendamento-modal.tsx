@@ -38,6 +38,7 @@ export function DetalheAgendamentoModal({
   const [produtoParaAdicionar, setProdutoParaAdicionar] = useState('')
   const [quantidadeParaAdicionar, setQuantidadeParaAdicionar] = useState(1)
   const [erroProduto, setErroProduto] = useState<string | null>(null)
+  const [erroConclusao, setErroConclusao] = useState<string | null>(null)
 
   const { itens: produtosDoAtendimento, totalProdutos, adicionar: adicionarProduto, remover: removerProduto } =
     useProdutosDoAgendamento(agendamento?.id)
@@ -66,8 +67,14 @@ export function DetalheAgendamentoModal({
 
   async function confirmarConclusaoComPagamento() {
     setCarregando(true)
-    await aoConcluirComPagamento(agendamento!, metodoPagamento)
+    setErroConclusao(null)
+    const erro = await aoConcluirComPagamento(agendamento!, metodoPagamento)
     setCarregando(false)
+    if (erro) {
+      setErroConclusao('Não foi possível concluir o atendimento. A função SQL concluir_agendamento_com_pagamento pode estar desatualizada — execute o arquivo sql_fix_descricao_financeiro.sql no SQL Editor do Supabase.')
+      setModoPagamento(false)
+      return
+    }
     setModoPagamento(false)
     onFechar()
   }
@@ -291,13 +298,16 @@ export function DetalheAgendamentoModal({
               </p>
             )}
             <div className="flex justify-end gap-2">
-              <Button variant="secondary" size="sm" onClick={() => setModoPagamento(false)}>
+              <Button variant="secondary" size="sm" onClick={() => { setModoPagamento(false); setErroConclusao(null) }}>
                 Cancelar
               </Button>
               <Button size="sm" onClick={confirmarConclusaoComPagamento} disabled={carregando}>
                 {carregando ? 'Confirmando…' : 'Confirmar conclusão'}
               </Button>
             </div>
+            {erroConclusao && (
+              <p className="rounded-md bg-danger-50 px-3 py-2 text-sm text-danger-500">{erroConclusao}</p>
+            )}
           </div>
         ) : (
           podeAgir && (
