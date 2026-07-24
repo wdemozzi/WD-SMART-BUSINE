@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
-import { Search, Plus, Minus, Trash2, ShoppingCart, Tag, X } from 'lucide-react'
+import { Search, Plus, Minus, Trash2, ShoppingCart, Tag, X, UserX } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useProdutos } from '@/hooks/use-produtos'
 import { useCadastrosAgenda } from '@/hooks/use-cadastros-agenda'
 import { previsualizarCupom } from '@/hooks/use-cupons'
 import { registrarVenda } from '@/hooks/use-vendas'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Select } from '@/components/ui/form'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, cn } from '@/lib/utils'
 import type { Produto } from '@/types/database'
 
 interface ItemCarrinho {
@@ -33,6 +34,10 @@ export function PdvPage() {
   const [finalizando, setFinalizando] = useState(false)
   const [erroVenda, setErroVenda] = useState<string | null>(null)
   const [sucessoVenda, setSucessoVenda] = useState<number | null>(null)
+  const [sucessoConsumo, setSucessoConsumo] = useState(false)
+  const [consumoInterno, setConsumoInterno] = useState(false)
+  const [funcionarioConsumo, setFuncionarioConsumo] = useState('')
+  const [registrandoConsumo, setRegistrandoConsumo] = useState(false)
 
   const produtosFiltrados = produtos.filter(
     (p) => p.ativo && p.nome.toLowerCase().includes(busca.toLowerCase())
@@ -46,6 +51,7 @@ export function PdvPage() {
 
   function adicionarAoCarrinho(produto: Produto) {
     setSucessoVenda(null)
+    setSucessoConsumo(false)
     setCarrinho((atual) => {
       const existente = atual.find((i) => i.produto.id === produto.id)
       if (existente) {
@@ -120,6 +126,40 @@ export function PdvPage() {
     setClienteId('')
     setFuncionarioId('')
     removerCupom()
+    await recarregar()
+  }
+
+  async function registrarConsumo() {
+    if (!empresa?.id || carrinho.length === 0 || !funcionarioConsumo) return
+    setRegistrandoConsumo(true)
+    setErroVenda(null)
+
+    const { data, error } = await supabase.rpc('registrar_consumo_interno', {
+      p_empresa_id: empresa.id,
+      p_funcionario_id: funcionarioConsumo,
+      p_criado_por: perfil?.id ?? null,
+      p_itens: carrinho.map((i) => ({ produto_id: i.produto.id, quantidade: i.quantidade })),
+    })
+
+    setRegistrandoConsumo(false)
+
+    if (error || !data || data.length === 0) {
+      setErroVenda('Não foi possível registrar o consumo interno.')
+      return
+    }
+
+    const resultado = data[0] as { consumo_ids: string[] | null; mensagem_erro: string | null }
+    if (resultado.mensagem_erro) {
+      setErroVenda(resultado.mensagem_erro)
+      return
+    }
+
+    setSucessoVenda(null)
+    setErroVenda(null)
+    setCarrinho([])
+    setFuncionarioConsumo('')
+    setConsumoInterno(false)
+    setSucessoConsumo(true)
     await recarregar()
   }
 
@@ -211,93 +251,153 @@ export function PdvPage() {
           </div>
         )}
 
-        <div className="space-y-2 border-t border-[var(--color-border)] pt-3">
-          <Select value={clienteId} onChange={(e) => setClienteId(e.target.value)}>
-            <option value="">Venda avulsa (sem cliente)</option>
-            {clientes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nome}
-              </option>
-            ))}
-          </Select>
+        {/* Toggle: consumo interno */}
+        <label
+          className={cn(
+            'flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 transition-colors',
+            consumoInterno
+              ? 'border-warning-500/50 bg-warning-50'
+              : 'border-[var(--color-border)] hover:border-warning-500/30'
+          )}
+        >
+          <input
+            type="checkbox"
+            checked={consumoInterno}
+            onChange={(e) => {
+              setConsumoInterno(e.target.checked)
+              setFuncionarioConsumo('')
+              setMetodo('dinheiro')
+              setClienteId('')
+              removerCupom()
+            }}
+            className="h-4 w-4 rounded border-[var(--color-border)] accent-warning-500"
+          />
+          <UserX className="h-4 w-4 text-warning-500" />
+          <span className="text-sm font-medium text-warning-600">Consumo interno</span>
+        </label>
 
-          <Select value={funcionarioId} onChange={(e) => setFuncionarioId(e.target.value)}>
-            <option value="">Sem vendedor</option>
+        {consumoInterno ? (
+          <Select value={funcionarioConsumo} onChange={(e) => setFuncionarioConsumo(e.target.value)}>
+            <option value="">Selecione o funcionário</option>
             {funcionarios.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.nome}
               </option>
             ))}
           </Select>
+        ) : (
+          <>
+            <div className="space-y-2 border-t border-[var(--color-border)] pt-3">
+              <Select value={clienteId} onChange={(e) => setClienteId(e.target.value)}>
+                <option value="">Venda avulsa (sem cliente)</option>
+                {clientes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </Select>
 
-          {cupomAplicado ? (
-            <div className="flex items-center justify-between rounded-md border border-success-500/30 bg-success-50 px-2.5 py-1.5 text-xs">
-              <span className="flex items-center gap-1 font-medium text-success-500">
-                <Tag className="h-3 w-3" />
-                {cupomAplicado.codigo} · -{formatCurrency(cupomAplicado.desconto)}
-              </span>
-              <button onClick={removerCupom} aria-label="Remover cupom">
-                <X className="h-3.5 w-3.5 text-success-500" />
-              </button>
+              <Select value={funcionarioId} onChange={(e) => setFuncionarioId(e.target.value)}>
+                <option value="">Sem vendedor</option>
+                {funcionarios.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.nome}
+                  </option>
+                ))}
+              </Select>
+
+              {cupomAplicado ? (
+                <div className="flex items-center justify-between rounded-md border border-success-500/30 bg-success-50 px-2.5 py-1.5 text-xs">
+                  <span className="flex items-center gap-1 font-medium text-success-500">
+                    <Tag className="h-3 w-3" />
+                    {cupomAplicado.codigo} · -{formatCurrency(cupomAplicado.desconto)}
+                  </span>
+                  <button onClick={removerCupom} aria-label="Remover cupom">
+                    <X className="h-3.5 w-3.5 text-success-500" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-1.5">
+                  <input
+                    value={codigoCupom}
+                    onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())}
+                    placeholder="Cupom"
+                    disabled={carrinho.length === 0}
+                    className="w-full rounded-md border border-[var(--color-border)] bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-brand-500"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleAplicarCupom}
+                    disabled={carrinho.length === 0 || validandoCupom}
+                  >
+                    {validandoCupom ? '…' : 'Aplicar'}
+                  </Button>
+                </div>
+              )}
+              {erroCupom && <p className="text-xs text-danger-500">{erroCupom}</p>}
+
+              <Select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
+                <option value="pix">PIX</option>
+                <option value="cartao">Cartão</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="boleto">Boleto</option>
+                <option value="outro">Outro</option>
+              </Select>
             </div>
-          ) : (
-            <div className="flex gap-1.5">
-              <input
-                value={codigoCupom}
-                onChange={(e) => setCodigoCupom(e.target.value.toUpperCase())}
-                placeholder="Cupom"
-                disabled={carrinho.length === 0}
-                className="w-full rounded-md border border-[var(--color-border)] bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-brand-500"
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleAplicarCupom}
-                disabled={carrinho.length === 0 || validandoCupom}
-              >
-                {validandoCupom ? '…' : 'Aplicar'}
-              </Button>
+
+            <div className="space-y-1 border-t border-[var(--color-border)] pt-3 text-sm">
+              <div className="flex justify-between text-[var(--color-ink-600)]">
+                <span>Subtotal</span>
+                <span className="font-data">{formatCurrency(valorBruto)}</span>
+              </div>
+              {cupomAplicado && (
+                <div className="flex justify-between text-success-500">
+                  <span>Desconto</span>
+                  <span className="font-data">- {formatCurrency(cupomAplicado.desconto)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-display text-base font-semibold text-[var(--color-ink-900)]">
+                <span>Total</span>
+                <span className="font-data">{formatCurrency(valorTotal)}</span>
+              </div>
             </div>
-          )}
-          {erroCupom && <p className="text-xs text-danger-500">{erroCupom}</p>}
+          </>
+        )}
 
-          <Select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
-            <option value="pix">PIX</option>
-            <option value="cartao">Cartão</option>
-            <option value="dinheiro">Dinheiro</option>
-            <option value="boleto">Boleto</option>
-            <option value="outro">Outro</option>
-          </Select>
-        </div>
-
-        <div className="space-y-1 border-t border-[var(--color-border)] pt-3 text-sm">
-          <div className="flex justify-between text-[var(--color-ink-600)]">
-            <span>Subtotal</span>
-            <span className="font-data">{formatCurrency(valorBruto)}</span>
+        {consumoInterno && (
+          <div className="rounded-md bg-warning-50 px-3 py-2 text-xs text-warning-600">
+            O valor dos produtos será registrado como débito do funcionário para cobrança ou desconto posterior.
           </div>
-          {cupomAplicado && (
-            <div className="flex justify-between text-success-500">
-              <span>Desconto</span>
-              <span className="font-data">- {formatCurrency(cupomAplicado.desconto)}</span>
-            </div>
-          )}
-          <div className="flex justify-between font-display text-base font-semibold text-[var(--color-ink-900)]">
-            <span>Total</span>
-            <span className="font-data">{formatCurrency(valorTotal)}</span>
-          </div>
-        </div>
+        )}
 
         {erroVenda && <p className="rounded-md bg-danger-50 px-3 py-2 text-sm text-danger-500">{erroVenda}</p>}
-        {sucessoVenda != null && (
+        {sucessoVenda != null && !consumoInterno && (
           <p className="rounded-md bg-success-50 px-3 py-2 text-sm text-success-500">
             Venda registrada: {formatCurrency(sucessoVenda)}
           </p>
         )}
+        {sucessoConsumo && (
+          <p className="rounded-md bg-warning-50 px-3 py-2 text-sm text-warning-600">
+            Consumo interno registrado com sucesso!
+          </p>
+        )}
 
-        <Button className="w-full" disabled={carrinho.length === 0 || finalizando} onClick={finalizarVenda}>
-          {finalizando ? 'Finalizando…' : 'Finalizar venda'}
-        </Button>
+        {consumoInterno ? (
+          <Button
+            className="w-full bg-warning-500 hover:bg-warning-600"
+            disabled={carrinho.length === 0 || !funcionarioConsumo || registrandoConsumo}
+            onClick={registrarConsumo}
+          >
+            <UserX className="h-4 w-4" />
+            {registrandoConsumo ? 'Registrando…' : 'Registrar consumo interno'}
+          </Button>
+        ) : (
+          <Button className="w-full" disabled={carrinho.length === 0 || finalizando} onClick={finalizarVenda}>
+            {finalizando ? 'Finalizando…' : 'Finalizar venda'}
+          </Button>
+        )}
       </Card>
     </div>
   )
