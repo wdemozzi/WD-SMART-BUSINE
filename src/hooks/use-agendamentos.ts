@@ -15,10 +15,10 @@ export function useAgendamentos(empresaId: string | undefined, inicio: Date, fim
     const { data, error } = await supabase
       .from('agendamentos')
       .select(
-        `id, empresa_id, cliente_id, funcionario_id, servico_id, data_hora_inicio, data_hora_fim, status, valor, origem,
+        `id, empresa_id, cliente_id, funcionario_id, servico_id, data_hora_inicio, data_hora_fim, status, valor, origem, cupom_id, cupom_codigo, valor_desconto,
          clientes ( nome, whatsapp ),
          servicos ( nome ),
-         funcionarios ( nome )`
+         funcionarios ( nome, percentual_comissao )`
       )
       .eq('empresa_id', empresaId)
       .gte('data_hora_inicio', inicio.toISOString())
@@ -42,9 +42,12 @@ export function useAgendamentos(empresaId: string | undefined, inicio: Date, fim
       status: StatusAgendamento
       valor: number | null
       origem: string | null
+      cupom_id: string | null
+      cupom_codigo: string | null
+      valor_desconto: number | null
       clientes: { nome: string; whatsapp: string | null } | null
       servicos: { nome: string } | null
-      funcionarios: { nome: string } | null
+      funcionarios: { nome: string; percentual_comissao: number | null } | null
     }
 
     const normalizados: AgendamentoCompleto[] = ((data ?? []) as unknown as LinhaBruta[]).map((a) => ({
@@ -62,6 +65,10 @@ export function useAgendamentos(empresaId: string | undefined, inicio: Date, fim
       cliente_whatsapp: a.clientes?.whatsapp ?? null,
       servico_nome: a.servicos?.nome ?? 'Serviço',
       funcionario_nome: a.funcionarios?.nome ?? null,
+      funcionario_percentual_comissao: a.funcionarios?.percentual_comissao ?? null,
+      cupom_id: a.cupom_id ?? null,
+      cupom_codigo: a.cupom_codigo ?? null,
+      valor_desconto: a.valor_desconto ?? null,
     }))
 
     setAgendamentos(normalizados)
