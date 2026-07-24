@@ -3,8 +3,9 @@ import { Tabs } from '@/components/ui/tabs'
 import { AbaFluxoCaixa } from '@/components/financeiro/aba-fluxo-caixa'
 import { AbaContasReceber } from '@/components/financeiro/aba-contas-receber'
 import { AbaContasPagar } from '@/components/financeiro/aba-contas-pagar'
+import { AbaConsumoInterno } from '@/components/financeiro/aba-consumo-interno'
 
-type AbaFinanceiro = 'fluxo' | 'receber' | 'pagar'
+type AbaFinanceiro = 'fluxo' | 'receber' | 'pagar' | 'consumo'
 
 export function FinanceiroPage() {
   const [aba, setAba] = useState<AbaFinanceiro>('fluxo')
@@ -21,6 +22,7 @@ export function FinanceiroPage() {
           { valor: 'fluxo', rotulo: 'Fluxo de Caixa' },
           { valor: 'receber', rotulo: 'A Receber' },
           { valor: 'pagar', rotulo: 'A Pagar' },
+          { valor: 'consumo', rotulo: 'Consumo Interno' },
         ]}
         ativa={aba}
         onChange={setAba}
@@ -29,6 +31,7 @@ export function FinanceiroPage() {
       {aba === 'fluxo' && <AbaFluxoCaixa />}
       {aba === 'receber' && <AbaContasReceber />}
       {aba === 'pagar' && <AbaContasPagar />}
+      {aba === 'consumo' && <AbaConsumoInterno />}
     </div>
   )
 }
