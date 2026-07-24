@@ -137,7 +137,13 @@ export function NovoAgendamentoModal({
     setHorarioSelecionado(null)
     const diaISO = diaSelecionado.toISOString().slice(0, 10)
     buscarHorariosDisponiveis(empresaId, funcionarioId, servicoId, diaISO).then((lista) => {
-      setHorarios(lista)
+      // Remove horários que já passaram (evita agendamento no passado no mesmo dia)
+      const agora = new Date()
+      const ehHoje = diaSelecionado.toDateString() === agora.toDateString()
+      const filtrada = ehHoje
+        ? lista.filter((h) => new Date(h).getTime() > agora.getTime())
+        : lista
+      setHorarios(filtrada)
       setCarregandoHorarios(false)
     })
   }, [diaSelecionado, servicoId, funcionarioId, empresaId])
