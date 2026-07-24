@@ -71,7 +71,8 @@ export function DetalheAgendamentoModal({
     const erro = await aoConcluirComPagamento(agendamento!, metodoPagamento)
     setCarregando(false)
     if (erro) {
-      setErroConclusao('Não foi possível concluir o atendimento. A função SQL concluir_agendamento_com_pagamento pode estar desatualizada — execute o arquivo sql_fix_descricao_financeiro.sql no SQL Editor do Supabase.')
+      const msg = typeof erro === 'object' && 'message' in erro ? String((erro as {message: string}).message) : JSON.stringify(erro)
+      setErroConclusao(msg)
       setModoPagamento(false)
       return
     }
