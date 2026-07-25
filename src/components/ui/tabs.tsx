@@ -10,7 +10,7 @@ export function Tabs<T extends string>({
   onChange: (v: T) => void
 }) {
   return (
-    <div className="flex gap-1 border-b border-[var(--color-border)]">
+    <div className="-mx-4 flex gap-1 overflow-x-auto border-b border-[var(--color-border)] px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
       {abas.map((aba) => (
         <button
           key={aba.valor}

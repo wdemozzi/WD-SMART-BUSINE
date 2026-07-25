@@ -76,7 +76,7 @@ export function ListaEsperaFormModal({
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="le_servico">Serviço desejado</Label>
             <Select id="le_servico" value={valores.servico_id} onChange={(e) => atualizarCampo('servico_id', e.target.value)} required>
@@ -105,7 +105,7 @@ export function ListaEsperaFormModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="le_data">Data desejada (opcional)</Label>
             <Input

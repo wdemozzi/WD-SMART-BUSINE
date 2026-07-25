@@ -126,7 +126,7 @@ export function DetalheAgendamentoModal({
         </div>
 
         <dl className="space-y-2 text-sm">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <dt className="text-[var(--color-ink-400)]">Data e horário</dt>
               <dd className="font-data text-[var(--color-ink-900)]">

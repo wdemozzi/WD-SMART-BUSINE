@@ -95,7 +95,7 @@ export function PacoteFormModal({
           <Textarea id="descricao" value={valores.descricao} onChange={(e) => atualizarCampo('descricao', e.target.value)} />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="valor_total">Valor total (R$)</Label>
             <Input

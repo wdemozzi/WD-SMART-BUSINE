@@ -77,7 +77,7 @@ export function CupomFormModal({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="tipo">Tipo de desconto</Label>
             <Select id="tipo" value={valores.tipo} onChange={(e) => atualizarCampo('tipo', e.target.value as CupomFormValues['tipo'])}>
@@ -98,7 +98,7 @@ export function CupomFormModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="validade">Validade (opcional)</Label>
             <Input id="validade" type="date" value={valores.validade} onChange={(e) => atualizarCampo('validade', e.target.value)} />

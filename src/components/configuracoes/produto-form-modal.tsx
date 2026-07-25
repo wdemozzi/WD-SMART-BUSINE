@@ -96,7 +96,7 @@ export function ProdutoFormModal({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="categoria">Categoria</Label>
             <Input
@@ -116,7 +116,7 @@ export function ProdutoFormModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="preco_custo">Preço de custo (R$)</Label>
             <Input
@@ -141,7 +141,7 @@ export function ProdutoFormModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="quantidade_estoque">Estoque atual</Label>
             <Input

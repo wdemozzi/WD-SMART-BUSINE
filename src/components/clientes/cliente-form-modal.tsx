@@ -96,7 +96,7 @@ export function ClienteFormModal({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="telefone">Telefone</Label>
             <Input id="telefone" value={valores.telefone} onChange={(e) => atualizarCampo('telefone', e.target.value)} />
@@ -112,7 +112,7 @@ export function ClienteFormModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="email">E-mail</Label>
             <Input id="email" type="email" value={valores.email} onChange={(e) => atualizarCampo('email', e.target.value)} />
@@ -123,7 +123,7 @@ export function ClienteFormModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="col-span-2">
             <Label htmlFor="cidade">Cidade</Label>
             <Input id="cidade" value={valores.cidade} onChange={(e) => atualizarCampo('cidade', e.target.value)} />

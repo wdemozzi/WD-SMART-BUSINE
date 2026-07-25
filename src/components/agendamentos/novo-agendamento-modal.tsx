@@ -291,7 +291,7 @@ export function NovoAgendamentoModal({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="servico">Serviço</Label>
             <Select id="servico" value={servicoId} onChange={(e) => setServicoId(e.target.value)} required>
@@ -365,7 +365,7 @@ export function NovoAgendamentoModal({
                 ) : horarios.length === 0 ? (
                   <p className="text-xs text-[var(--color-ink-400)]">Nenhum horário livre neste dia. Escolha outra data.</p>
                 ) : (
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                     {horarios.map((h) => {
                       const ativo = horarioSelecionado === h
                       return (

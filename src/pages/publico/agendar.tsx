@@ -320,7 +320,7 @@ export function AgendamentoPublicoPage() {
         {etapa === 'data' && (
           <div className="space-y-3">
             <h2 className="text-base font-semibold text-gray-900">3. Escolha a data</h2>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {dias.map((d) => (
                 <button
                   key={d.toISOString()}
@@ -348,7 +348,7 @@ export function AgendamentoPublicoPage() {
             ) : horarios.length === 0 ? (
               <p className="text-sm text-gray-400">Nenhum horário disponível neste dia. Volte e escolha outra data.</p>
             ) : (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
                 {horarios.map((h) => (
                   <button
                     key={h}

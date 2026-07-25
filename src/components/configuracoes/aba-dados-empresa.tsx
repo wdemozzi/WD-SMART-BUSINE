@@ -96,8 +96,8 @@ export function AbaDadosEmpresa() {
       <Card>
         <CardContent className="pt-5">
           <form onSubmit={handleSubmit} className="max-w-2xl space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
                 <Label htmlFor="nome">Nome da empresa</Label>
                 <Input id="nome" value={form.nome} onChange={(e) => atualizarCampo('nome', e.target.value)} required />
               </div>
@@ -117,7 +117,7 @@ export function AbaDadosEmpresa() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="email">E-mail de contato</Label>
                 <Input id="email" type="email" value={form.email} onChange={(e) => atualizarCampo('email', e.target.value)} />
@@ -133,8 +133,8 @@ export function AbaDadosEmpresa() {
               <Input id="endereco" value={form.endereco} onChange={(e) => atualizarCampo('endereco', e.target.value)} />
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="sm:col-span-2">
                 <Label htmlFor="cidade">Cidade</Label>
                 <Input id="cidade" value={form.cidade} onChange={(e) => atualizarCampo('cidade', e.target.value)} />
               </div>
@@ -256,7 +256,7 @@ export function AbaDadosEmpresa() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="instagram">
                   <span className="flex items-center gap-1">
