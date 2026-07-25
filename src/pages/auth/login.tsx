@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 
 export function LoginPage() {
@@ -8,7 +9,10 @@ export function LoginPage() {
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
-  const navigate = useNavigate()
+  const { session, carregando } = useAuth()
+
+  // Se já estiver logado, redireciona direto pro dashboard
+  if (!carregando && session) return <Navigate to="/dashboard" replace />
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -24,7 +28,8 @@ export function LoginPage() {
       return
     }
 
-    navigate('/dashboard')
+    // O Navigate no topo do componente cuidará do redirecionamento
+    // assim que o onAuthStateChange atualizar a session no contexto.
   }
 
   return (

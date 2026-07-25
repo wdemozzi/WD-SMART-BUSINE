@@ -9,6 +9,7 @@ interface AuthContextValue {
   empresa: Empresa | null
   carregando: boolean
   signOut: () => Promise<void>
+  recarregarPerfil: (userId: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -20,21 +21,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [carregando, setCarregando] = useState(true)
 
   async function carregarPerfil(userId: string) {
-    const { data: perfilData } = await supabase
-      .from('perfis')
-      .select('*')
-      .eq('id', userId)
-      .single()
-
-    setPerfil(perfilData as Perfil | null)
-
-    if (perfilData?.empresa_id) {
-      const { data: empresaData } = await supabase
-        .from('empresas')
+    // maybeSingle() não estoura exceção quando não encontra linha — retorna
+    // { data: null } normalmente. Tratamos aqui para evitar race condition.
+    try {
+      const { data: perfilData, error } = await supabase
+        .from('perfis')
         .select('*')
-        .eq('id', perfilData.empresa_id)
-        .single()
-      setEmpresa(empresaData as Empresa | null)
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (error) {
+        console.warn('Erro ao carregar perfil:', error.message)
+        setPerfil(null)
+        return
+      }
+
+      setPerfil(perfilData as Perfil | null)
+
+      if (perfilData?.empresa_id) {
+        const { data: empresaData } = await supabase
+          .from('empresas')
+          .select('*')
+          .eq('id', perfilData.empresa_id)
+          .maybeSingle()
+        setEmpresa(empresaData as Empresa | null)
+      } else {
+        setEmpresa(null)
+      }
+    } catch (err: any) {
+      console.warn('Falha inesperada ao carregar perfil:', err?.message ?? err)
+      setPerfil(null)
+      setEmpresa(null)
     }
   }
 
@@ -87,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, perfil, empresa, carregando, signOut }}>
+    <AuthContext.Provider value={{ session, perfil, empresa, carregando, signOut, recarregarPerfil: carregarPerfil }}>
       {children}
     </AuthContext.Provider>
   )
