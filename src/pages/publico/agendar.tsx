@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { CalendarDays, Check, ChevronLeft, Clock, User, AtSign, MapPin, Phone } from 'lucide-react'
 import {
@@ -14,16 +14,18 @@ import { formatCurrency } from '@/lib/utils'
 
 type Etapa = 'servico' | 'profissional' | 'data' | 'horario' | 'dados' | 'confirmado'
 
-function proximosDias(quantidade: number) {
-  return Array.from({ length: quantidade }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() + i)
-    return d
-  })
+function hojeISO() {
+  const d = new Date()
+  return d.toISOString().slice(0, 10)
+}
+
+function maxISO() {
+  const d = new Date()
+  d.setDate(d.getDate() + 60)
+  return d.toISOString().slice(0, 10)
 }
 
 // Remove marcações de markdown que às vezes vêm coladas de outro lugar
-// (##, **negrito**, etc.) para exibir como texto corrido e limpo.
 function limparTexto(texto: string) {
   return texto
     .replace(/^#+\s*/gm, '')
@@ -41,10 +43,11 @@ export function AgendamentoPublicoPage() {
   const [etapa, setEtapa] = useState<Etapa>('servico')
   const [servico, setServico] = useState<ServicoPublico | null>(null)
   const [funcionario, setFuncionario] = useState<FuncionarioPublico | null>(null)
-  const [diaSelecionado, setDiaSelecionado] = useState<Date | null>(null)
+  const [dataDigitada, setDataDigitada] = useState('')
   const [horarios, setHorarios] = useState<string[]>([])
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)
-  const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null)
+  const [horaDigitada, setHoraDigitada] = useState('')
+  const [erroHorario, setErroHorario] = useState<string | null>(null)
 
   const [nome, setNome] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -53,16 +56,16 @@ export function AgendamentoPublicoPage() {
   const [erro, setErro] = useState<string | null>(null)
   const [bioExpandida, setBioExpandida] = useState(false)
 
-  const dias = useMemo(() => proximosDias(14), [])
   const [segundosParaReiniciar, setSegundosParaReiniciar] = useState(8)
 
   function reiniciarFluxo() {
     setEtapa('servico')
     setServico(null)
     setFuncionario(null)
-    setDiaSelecionado(null)
+    setDataDigitada('')
     setHorarios([])
-    setHorarioSelecionado(null)
+    setHoraDigitada('')
+    setErroHorario(null)
     setNome('')
     setWhatsapp('')
     setEmail('')
@@ -93,27 +96,71 @@ export function AgendamentoPublicoPage() {
     }
   }, [empresa?.cor_primaria])
 
+  // Carrega horários disponíveis quando data, serviço e profissional estão definidos
   useEffect(() => {
-    if (!empresa?.id || !funcionario || !servico || !diaSelecionado) return
+    if (!empresa?.id || !funcionario || !servico || !dataDigitada) {
+      setHorarios([])
+      return
+    }
     setCarregandoHorarios(true)
-    setHorarioSelecionado(null)
-    const diaISO = diaSelecionado.toISOString().slice(0, 10)
-    buscarHorariosDisponiveis(empresa.id, funcionario.id, servico.id, diaISO).then((lista) => {
-      // Remove horários que já passaram (evita agendamento no passado no mesmo dia)
+    setHoraDigitada('')
+    setErroHorario(null)
+    buscarHorariosDisponiveis(empresa.id, funcionario.id, servico.id, dataDigitada).then((lista) => {
       const agora = new Date()
-      const ehHoje = diaSelecionado.toDateString() === agora.toDateString()
+      const ehHoje = dataDigitada === hojeISO()
       const filtrada = ehHoje
         ? lista.filter((h: string) => new Date(h).getTime() > agora.getTime())
         : lista
       setHorarios(filtrada)
       setCarregandoHorarios(false)
     })
-  }, [empresa?.id, funcionario, servico, diaSelecionado])
+  }, [empresa?.id, funcionario, servico, dataDigitada])
+
+  function avancarParaHorario() {
+    if (!dataDigitada) return
+    setHoraDigitada('')
+    setErroHorario(null)
+    setEtapa('horario')
+  }
+
+  function confirmarHorario() {
+    if (!horaDigitada) return
+    setErroHorario(null)
+
+    // Monta data/hora completa e valida contra a lista de disponíveis
+    const dataHora = new Date(`${dataDigitada}T${horaDigitada}:00`)
+
+    if (isNaN(dataHora.getTime())) {
+      setErroHorario('Hora inválida. Use o formato HH:MM.')
+      return
+    }
+
+    // Verifica se está na lista de horários disponíveis
+    const iso = dataHora.toISOString()
+    if (horarios.length > 0 && !horarios.includes(iso)) {
+      setErroHorario('Este horário não está disponível. Escolha outro.')
+      return
+    }
+
+    // Verifica se não é no passado
+    if (dataHora.getTime() <= new Date().getTime()) {
+      setErroHorario('Não é possível agendar em um horário que já passou.')
+      return
+    }
+
+    setEtapa('dados')
+  }
 
   async function confirmarAgendamento() {
-    if (!empresa || !servico || !funcionario || !horarioSelecionado) return
+    if (!empresa || !servico || !funcionario || !horaDigitada || !dataDigitada) return
     if (!nome.trim() || !whatsapp.trim()) {
       setErro('Preencha nome e WhatsApp para continuar.')
+      return
+    }
+
+    const dataHora = new Date(`${dataDigitada}T${horaDigitada}:00`)
+    if (isNaN(dataHora.getTime())) {
+      setErro('Data ou horário inválido.')
       return
     }
 
@@ -124,7 +171,7 @@ export function AgendamentoPublicoPage() {
       empresaId: empresa.id,
       servicoId: servico.id,
       funcionarioId: funcionario.id,
-      dataHoraInicio: horarioSelecionado,
+      dataHoraInicio: dataHora.toISOString(),
       nome,
       telefone: whatsapp,
       whatsapp,
@@ -160,13 +207,12 @@ export function AgendamentoPublicoPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero: banner com overlay + logo sobreposto, estilo página de negócio */}
+      {/* Hero */}
       <div className="relative">
         <div
           className="h-44 w-full bg-gradient-to-br from-[var(--color-brand-500)] to-[var(--color-brand-500)]/60 bg-cover bg-center sm:h-56"
           style={empresa.banner_url ? { backgroundImage: `url(${empresa.banner_url})` } : undefined}
         />
-        {/* Esmaece a base do banner para a transição com o conteúdo ficar suave */}
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-gray-50 to-transparent" />
       </div>
 
@@ -259,6 +305,7 @@ export function AgendamentoPublicoPage() {
           </button>
         )}
 
+        {/* Etapa 1 — Serviço */}
         {etapa === 'servico' && (
           <div className="space-y-3">
             <h2 className="text-base font-semibold text-gray-900">1. Escolha o serviço</h2>
@@ -287,6 +334,7 @@ export function AgendamentoPublicoPage() {
           </div>
         )}
 
+        {/* Etapa 2 — Profissional */}
         {etapa === 'profissional' && (
           <div className="space-y-3">
             <h2 className="text-base font-semibold text-gray-900">2. Escolha o profissional</h2>
@@ -317,56 +365,97 @@ export function AgendamentoPublicoPage() {
           </div>
         )}
 
+        {/* Etapa 3 — Digitar data */}
         {etapa === 'data' && (
           <div className="space-y-3">
-            <h2 className="text-base font-semibold text-gray-900">3. Escolha a data</h2>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {dias.map((d) => (
-                <button
-                  key={d.toISOString()}
-                  onClick={() => {
-                    setDiaSelecionado(d)
-                    setEtapa('horario')
-                  }}
-                  className="flex flex-col items-center rounded-lg border border-gray-200 bg-white py-3 hover:border-[var(--color-brand-500)]"
-                >
-                  <span className="text-xs capitalize text-gray-400">
-                    {d.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                  </span>
-                  <span className="text-base font-semibold text-gray-900">{d.getDate()}</span>
-                </button>
-              ))}
-            </div>
+            <h2 className="text-base font-semibold text-gray-900">3. Digite a data</h2>
+            <p className="text-sm text-gray-500">
+              Escolha um dia para o seu agendamento. Datas indisponíveis não terão horários livres.
+            </p>
+
+            <input
+              type="date"
+              value={dataDigitada}
+              onChange={(e) => setDataDigitada(e.target.value)}
+              min={hojeISO()}
+              max={maxISO()}
+              className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-[var(--color-brand-500)] focus:ring-1 focus:ring-[var(--color-brand-500)]"
+            />
+
+            <button
+              onClick={avancarParaHorario}
+              disabled={!dataDigitada}
+              className="w-full rounded-md bg-[var(--color-brand-500)] py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            >
+              Ver horários disponíveis
+            </button>
           </div>
         )}
 
+        {/* Etapa 4 — Digitar hora */}
         {etapa === 'horario' && (
           <div className="space-y-3">
-            <h2 className="text-base font-semibold text-gray-900">4. Escolha o horário</h2>
+            <h2 className="text-base font-semibold text-gray-900">4. Digite o horário</h2>
+
             {carregandoHorarios ? (
-              <p className="text-sm text-gray-400">Buscando horários…</p>
-            ) : horarios.length === 0 ? (
+              <p className="text-sm text-gray-400">Buscando horários livres…</p>
+            ) : horarios.length === 0 && dataDigitada ? (
               <p className="text-sm text-gray-400">Nenhum horário disponível neste dia. Volte e escolha outra data.</p>
-            ) : (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
-                {horarios.map((h) => (
-                  <button
-                    key={h}
-                    onClick={() => {
-                      setHorarioSelecionado(h)
-                      setEtapa('dados')
-                    }}
-                    className="flex items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-medium text-gray-900 hover:border-[var(--color-brand-500)]"
-                  >
-                    <Clock className="h-3.5 w-3.5 text-gray-400" />
-                    {new Date(h).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                  </button>
-                ))}
-              </div>
-            )}
+            ) : null}
+
+            {/* Input de hora */}
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-gray-900">
+                Horário desejado
+              </label>
+              <input
+                type="time"
+                value={horaDigitada}
+                onChange={(e) => {
+                  setHoraDigitada(e.target.value)
+                  setErroHorario(null)
+                }}
+                className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-[var(--color-brand-500)] focus:ring-1 focus:ring-[var(--color-brand-500)]"
+              />
+
+              {/* Sugestões de horários disponíveis */}
+              {horarios.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {horarios.slice(0, 12).map((h) => {
+                    const hora = new Date(h).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                    return (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => {
+                          setHoraDigitada(new Date(h).toTimeString().slice(0, 5))
+                          setErroHorario(null)
+                        }}
+                        className="rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-700 hover:border-[var(--color-brand-500)] hover:text-[var(--color-brand-500)]"
+                      >
+                        {hora}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {erroHorario && (
+                <p className="text-xs text-red-600">{erroHorario}</p>
+              )}
+            </div>
+
+            <button
+              onClick={confirmarHorario}
+              disabled={!horaDigitada}
+              className="w-full rounded-md bg-[var(--color-brand-500)] py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            >
+              Continuar
+            </button>
           </div>
         )}
 
+        {/* Etapa 5 — Dados pessoais */}
         {etapa === 'dados' && (
           <div className="space-y-4">
             <h2 className="text-base font-semibold text-gray-900">5. Seus dados</h2>
@@ -374,9 +463,8 @@ export function AgendamentoPublicoPage() {
             <div className="rounded-lg border border-gray-200 bg-white p-3 text-sm">
               <p className="font-medium text-gray-900">{servico?.nome}</p>
               <p className="text-gray-500">
-                com {funcionario?.nome} · {diaSelecionado?.toLocaleDateString('pt-BR')} às{' '}
-                {horarioSelecionado &&
-                  new Date(horarioSelecionado).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                com {funcionario?.nome} · {dataDigitada && new Date(dataDigitada + 'T12:00').toLocaleDateString('pt-BR')} às{' '}
+                {horaDigitada}
               </p>
             </div>
 
@@ -397,6 +485,7 @@ export function AgendamentoPublicoPage() {
                   onChange={(e) => setWhatsapp(e.target.value)}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[var(--color-brand-500)]"
                   placeholder="(00) 00000-0000"
+                  inputMode="tel"
                 />
               </div>
               <div>
@@ -430,9 +519,9 @@ export function AgendamentoPublicoPage() {
             </div>
             <h2 className="text-lg font-semibold text-gray-900">Agendamento confirmado!</h2>
             <p className="max-w-xs text-sm text-gray-500">
-              {servico?.nome} com {funcionario?.nome} em {diaSelecionado?.toLocaleDateString('pt-BR')} às{' '}
-              {horarioSelecionado &&
-                new Date(horarioSelecionado).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              {servico?.nome} com {funcionario?.nome} em{' '}
+              {dataDigitada && new Date(dataDigitada + 'T12:00').toLocaleDateString('pt-BR')} às{' '}
+              {horaDigitada}
             </p>
             <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
               <CalendarDays className="h-3.5 w-3.5" />

@@ -33,15 +33,6 @@ interface NovoAgendamentoModalProps {
   }) => Promise<unknown>
 }
 
-function proximosDias(quantidade: number, aPartirDe: Date) {
-  return Array.from({ length: quantidade }, (_, i) => {
-    const d = new Date(aPartirDe)
-    d.setHours(0, 0, 0, 0)
-    d.setDate(d.getDate() + i)
-    return d
-  })
-}
-
 function paraInputDatetimeLocal(data: Date) {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${data.getFullYear()}-${pad(data.getMonth() + 1)}-${pad(data.getDate())}T${pad(data.getHours())}:${pad(data.getMinutes())}`
@@ -87,8 +78,6 @@ export function NovoAgendamentoModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aberto, preenchimentoInicial])
-
-  const dias = useMemo(() => proximosDias(14, new Date()), [])
 
   const servicoSelecionado = useMemo(() => servicos.find((s) => s.id === servicoId), [servicos, servicoId])
 
@@ -331,42 +320,50 @@ export function NovoAgendamentoModal({
         ) : (
           <div className="space-y-3">
             <div>
-              <Label>Data</Label>
-              <div className="flex gap-1.5 overflow-x-auto pb-1">
-                {dias.map((d) => {
-                  const ativo = diaSelecionado?.toDateString() === d.toDateString()
-                  return (
-                    <button
-                      key={d.toISOString()}
-                      type="button"
-                      onClick={() => setDiaSelecionado(d)}
-                      className={cn(
-                        'flex shrink-0 flex-col items-center rounded-md border px-2.5 py-1.5 text-xs',
-                        ativo
-                          ? 'border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-500/10'
-                          : 'border-[var(--color-border)] text-[var(--color-ink-600)] hover:border-brand-500'
-                      )}
-                    >
-                      <span className="capitalize text-[10px] text-[var(--color-ink-400)]">
-                        {d.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                      </span>
-                      <span className="font-semibold">{d.getDate()}</span>
-                    </button>
-                  )
-                })}
-              </div>
+              <Label htmlFor="data-agendamento">Data</Label>
+              <Input
+                id="data-agendamento"
+                type="date"
+                value={diaSelecionado ? diaSelecionado.toISOString().slice(0, 10) : ''}
+                onChange={(e) => {
+                  setDiaSelecionado(e.target.value ? new Date(e.target.value + 'T12:00') : null)
+                }}
+                min={new Date().toISOString().slice(0, 10)}
+              />
             </div>
 
             {diaSelecionado && (
               <div>
-                <Label>Horário</Label>
+                <Label htmlFor="horario-agendamento">Horário</Label>
                 {carregandoHorarios ? (
                   <p className="text-xs text-[var(--color-ink-400)]">Buscando horários livres…</p>
                 ) : horarios.length === 0 ? (
                   <p className="text-xs text-[var(--color-ink-400)]">Nenhum horário livre neste dia. Escolha outra data.</p>
-                ) : (
-                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-                    {horarios.map((h) => {
+                ) : null}
+
+                <Input
+                  id="horario-agendamento"
+                  type="time"
+                  value={horarioSelecionado ? new Date(horarioSelecionado).toTimeString().slice(0, 5) : ''}
+                  onChange={(e) => {
+                    const time = e.target.value
+                    if (!time || !diaSelecionado) {
+                      setHorarioSelecionado(null)
+                      return
+                    }
+                    const [h, m] = time.split(':')
+                    const data = new Date(diaSelecionado)
+                    data.setHours(Number(h), Number(m), 0, 0)
+                    setHorarioSelecionado(data.toISOString())
+                  }}
+                  className="mt-1.5"
+                />
+
+                {/* Sugestões de horários livres */}
+                {horarios.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {horarios.slice(0, 16).map((h) => {
+                      const horaFormatada = new Date(h).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
                       const ativo = horarioSelecionado === h
                       return (
                         <button
@@ -374,18 +371,23 @@ export function NovoAgendamentoModal({
                           type="button"
                           onClick={() => setHorarioSelecionado(h)}
                           className={cn(
-                            'flex items-center justify-center gap-1 rounded-md border py-1.5 text-xs font-medium',
+                            'rounded-md border px-2 py-1 text-xs font-medium transition-colors',
                             ativo
                               ? 'border-brand-500 bg-brand-500 text-white'
-                              : 'border-[var(--color-border)] text-[var(--color-ink-900)] hover:border-brand-500'
+                              : 'border-[var(--color-border)] text-[var(--color-ink-600)] hover:border-brand-500'
                           )}
                         >
-                          <Clock className="h-3 w-3" />
-                          {new Date(h).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          {horaFormatada}
                         </button>
                       )
                     })}
                   </div>
+                )}
+
+                {horarios.length === 0 && !carregandoHorarios && diaSelecionado && (
+                  <p className="mt-1 text-xs text-[var(--color-ink-400)]">
+                    Digite o horário manualmente ou escolha outra data.
+                  </p>
                 )}
               </div>
             )}
