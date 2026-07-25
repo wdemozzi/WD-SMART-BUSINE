@@ -54,8 +54,12 @@ export function useProdutos(empresaId: string | undefined) {
 
   async function excluir(id: string) {
     const { error } = await supabase.from('produtos').delete().eq('id', id)
-    if (!error) await carregar()
-    return error
+    if (error) {
+      console.error('Erro ao excluir produto:', error.message, error.details, error.hint)
+      return error
+    }
+    await carregar()
+    return null
   }
 
   return { produtos, carregando, erro, criar, atualizar, excluir, recarregar: carregar }

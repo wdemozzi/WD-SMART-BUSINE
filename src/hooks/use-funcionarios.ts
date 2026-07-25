@@ -51,8 +51,12 @@ export function useFuncionarios(empresaId: string | undefined) {
 
   async function excluir(id: string) {
     const { error } = await supabase.from('funcionarios').delete().eq('id', id)
-    if (!error) await carregar()
-    return error
+    if (error) {
+      console.error('Erro ao excluir funcionário:', error.message, error.details, error.hint)
+      return error
+    }
+    await carregar()
+    return null
   }
 
   return { funcionarios, carregando, erro, criar, atualizar, excluir }
