@@ -16,12 +16,18 @@ export function AbaServicos() {
   const [servicoEmEdicao, setServicoEmEdicao] = useState<Servico | null>(null)
   const [servicoParaExcluir, setServicoParaExcluir] = useState<Servico | null>(null)
   const [excluindo, setExcluindo] = useState(false)
+  const [erroExclusao, setErroExclusao] = useState<string | null>(null)
 
   async function confirmarExclusao() {
     if (!servicoParaExcluir) return
     setExcluindo(true)
-    await excluir(servicoParaExcluir.id)
+    setErroExclusao(null)
+    const erro = await excluir(servicoParaExcluir.id)
     setExcluindo(false)
+    if (erro) {
+      setErroExclusao(erro.message ?? 'Erro ao excluir serviço.')
+      return
+    }
     setServicoParaExcluir(null)
   }
 
@@ -44,6 +50,7 @@ export function AbaServicos() {
       </div>
 
       {erro && <p className="rounded-md bg-danger-50 px-3 py-2 text-sm text-danger-500">{erro}</p>}
+      {erroExclusao && <p className="rounded-md bg-danger-50 px-3 py-2 text-sm text-danger-500">{erroExclusao}</p>}
 
       <Card className="overflow-hidden">
         <table className="w-full text-left text-sm">

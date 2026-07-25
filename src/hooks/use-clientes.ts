@@ -55,8 +55,12 @@ export function useClientes(empresaId: string | undefined) {
 
   async function excluir(id: string) {
     const { error } = await supabase.from('clientes').delete().eq('id', id)
-    if (!error) await carregar()
-    return error
+    if (error) {
+      console.error('Erro ao excluir cliente:', error.message, error.details, error.hint)
+      return error
+    }
+    await carregar()
+    return null
   }
 
   return { clientes, carregando, erro, recarregar: carregar, criar, atualizar, excluir }

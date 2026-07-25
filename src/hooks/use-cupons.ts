@@ -57,8 +57,12 @@ export function useCupons(empresaId: string | undefined) {
 
   async function excluir(id: string) {
     const { error } = await supabase.from('cupons').delete().eq('id', id)
-    if (!error) await carregar()
-    return error
+    if (error) {
+      console.error('Erro ao excluir cupom:', error.message, error.details, error.hint)
+      return error
+    }
+    await carregar()
+    return null
   }
 
   return { cupons, carregando, erro, criar, alternarAtivo, excluir }

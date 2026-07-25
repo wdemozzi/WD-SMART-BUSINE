@@ -16,12 +16,18 @@ export function AbaProdutos() {
   const [produtoEmEdicao, setProdutoEmEdicao] = useState<Produto | null>(null)
   const [produtoParaExcluir, setProdutoParaExcluir] = useState<Produto | null>(null)
   const [excluindo, setExcluindo] = useState(false)
+  const [erroExclusao, setErroExclusao] = useState<string | null>(null)
 
   async function confirmarExclusao() {
     if (!produtoParaExcluir) return
     setExcluindo(true)
-    await excluir(produtoParaExcluir.id)
+    setErroExclusao(null)
+    const erro = await excluir(produtoParaExcluir.id)
     setExcluindo(false)
+    if (erro) {
+      setErroExclusao(erro.message ?? 'Erro ao excluir produto.')
+      return
+    }
     setProdutoParaExcluir(null)
   }
 
@@ -42,6 +48,7 @@ export function AbaProdutos() {
       </div>
 
       {erro && <p className="rounded-md bg-danger-50 px-3 py-2 text-sm text-danger-500">{erro}</p>}
+      {erroExclusao && <p className="rounded-md bg-danger-50 px-3 py-2 text-sm text-danger-500">{erroExclusao}</p>}
 
       <Card className="overflow-hidden">
         <table className="w-full text-left text-sm">

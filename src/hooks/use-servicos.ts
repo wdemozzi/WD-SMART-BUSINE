@@ -51,8 +51,12 @@ export function useServicos(empresaId: string | undefined) {
 
   async function excluir(id: string) {
     const { error } = await supabase.from('servicos').delete().eq('id', id)
-    if (!error) await carregar()
-    return error
+    if (error) {
+      console.error('Erro ao excluir serviço:', error.message, error.details, error.hint)
+      return error
+    }
+    await carregar()
+    return null
   }
 
   return { servicos, carregando, erro, criar, atualizar, excluir }
