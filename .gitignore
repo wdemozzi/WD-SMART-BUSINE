@@ -31,3 +31,6 @@ frontend (2)/
 *.sln
 *.sw?
 .env.example
+
+.vercel
+.env*
