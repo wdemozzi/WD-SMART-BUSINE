@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Pasta fantasma
+frontend (2)/
+
 # Variáveis de ambiente (contém chaves sensíveis — nunca versionar)
 .env
 .env.local
