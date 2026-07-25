@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Tag, X, Clock, AlertTriangle, Sparkles } from 'lucide-react'
+import { Tag, X, AlertTriangle, Sparkles } from 'lucide-react'
 import { Dialog } from '@/components/ui/dialog'
 import { Label, Input, Select, Textarea } from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
